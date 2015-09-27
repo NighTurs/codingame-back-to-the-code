@@ -98,7 +98,7 @@ public class Player {
         return valueFor(gameState, x, y, z);
     }
 
-    static final double k[][] = new double[][] {{1.0, 1.0, 0.3}, {1.0, 1.0, 0.1}, {1.0, 1.0, 0.1}};
+    static final double k[][] = new double[][] {{1.0, 1.0, 0.3}, {1.0, 1.0, 0.1}, {5.0, 1.0, 0.0}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -400,19 +400,39 @@ public class Player {
 
     public static class Fenwick {
 
+        int[][] grid = new int[N][M];
         int[][] empty = new int[N][M];
         int[][] myPlayer = new int[N][M];
 
         public Fenwick(int[][] grid) {
+            this.grid = grid;
             initEmpty(grid);
             initMy(grid);
         }
 
         public int countEmpty(int i1, int i2, int h1, int h2) {
+            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 10) {
+                int ct = 0;
+                for (int i = i1; i <= i2; ++i) {
+                    for (int h = h1; h <= h2; ++h) {
+                        ct += grid[i][h] == EMPTY ? 1 : 0;
+                    }
+                }
+                return ct;
+            }
             return count(i1, i2, h1, h2, empty);
         }
 
         public int countMy(int i1, int i2, int h1, int h2) {
+            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 10) {
+                int ct = 0;
+                for (int i = i1; i <= i2; ++i) {
+                    for (int h = h1; h <= h2; ++h) {
+                        ct += grid[i][h] == MY ? 1 : 0;
+                    }
+                }
+                return ct;
+            }
             return count(i1, i2, h1, h2, myPlayer);
         }
 
@@ -441,7 +461,7 @@ public class Player {
         }
 
         private int count(int i1, int i2, int h1, int h2, int[][] t) {
-            return count(i2, h2, t) - count(i1 - 1, h2, t) - count(i2, h1 - 1, t) + count(i1 - 1, h2 - 1, t);
+            return count(i2, h2, t) - count(i1 - 1, h2, t) - count(i2, h1 - 1, t) + count(i1 - 1, h1 - 1, t);
         }
 
         private int count(int ii, int hh, int[][] t) {

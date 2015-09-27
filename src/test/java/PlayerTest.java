@@ -281,16 +281,30 @@ public class PlayerTest {
         grid[1][1] = 1;
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
         assertFalse(Player.isValidRectangle(gameState, 0, 2, 0, 2));
+        grid = emptyGrid();
+        for (int i = 18; i <= 19; i++) {
+            for (int h = 21; h <= 25; h++) {
+                grid[i][h] = 0;
+            }
+        }
+        gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        assertFalse(Player.isValidRectangle(gameState, 18, 19, 21, 25));
     }
 
     @Ignore
     @Test
     public void testMakeTurn() {
-        PlayerState myPlayerState = new PlayerState(0, 0, 0);
+        PlayerState myPlayerState = new PlayerState(15, 5, 0);
         int[][] grid = emptyGrid();
         for (int i = 0; i < 350; i++) {
-            GameState gameState = new GameState(0, 1, Arrays.asList(myPlayerState, new PlayerState(0, 0, 0)), grid);
             long st = System.currentTimeMillis();
+            GameState gameState = new GameState(0,
+                    1,
+                    Arrays.asList(myPlayerState,
+                            new PlayerState(5, 15, 0),
+                            new PlayerState(15, 15, 0),
+                            new PlayerState(5, 5, 0)),
+                    grid);
             Turn turn = Player.makeTurn(gameState);
             long ed = System.currentTimeMillis();
             System.out.println((ed - st) + "ms " + turn.toString());
