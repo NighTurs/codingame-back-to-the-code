@@ -35,7 +35,7 @@ public class Simulation {
 
     @Test
     public void testCrash() {
-        int[][] scores = new int[Np][4];
+        int[][] scores = new int[Np][NPLAYERS];
         Random rand = new Random();
         while(true) {
             System.out.println("NEW GAME");
@@ -161,12 +161,11 @@ public class Simulation {
                                 } else {
                                     if (to1 == 0 || to2 == 0 || to1 == Player.N - 1 || to2 == Player.M - 1) {
                                         foundBorder = true;
-                                    } else {
-                                        c[to1][to2] = true;
-                                        b[kn][0] = to1;
-                                        b[kn][1] = to2;
-                                        kn++;
                                     }
+                                    c[to1][to2] = true;
+                                    b[kn][0] = to1;
+                                    b[kn][1] = to2;
+                                    kn++;
                                 }
                             }
                         }
