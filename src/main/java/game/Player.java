@@ -98,7 +98,7 @@ public class Player {
         return valueFor(gameState, x, y, z);
     }
 
-    static final double k[][] = new double[][] {{0.6, 1.0, 0.35}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+    public static double k[][] = new double[][] {{0.6, 1.0, 0.35}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -411,28 +411,28 @@ public class Player {
         }
 
         public int countEmpty(int i1, int i2, int h1, int h2) {
-            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
-                int ct = 0;
-                for (int i = i1; i <= i2; ++i) {
-                    for (int h = h1; h <= h2; ++h) {
-                        ct += grid[i][h] == EMPTY ? 1 : 0;
-                    }
-                }
-                return ct;
-            }
+//            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
+//                int ct = 0;
+//                for (int i = i1; i <= i2; ++i) {
+//                    for (int h = h1; h <= h2; ++h) {
+//                        ct += grid[i][h] == EMPTY ? 1 : 0;
+//                    }
+//                }
+//                return ct;
+//            }
             return count(i1, i2, h1, h2, empty);
         }
 
         public int countMy(int i1, int i2, int h1, int h2) {
-            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
-                int ct = 0;
-                for (int i = i1; i <= i2; ++i) {
-                    for (int h = h1; h <= h2; ++h) {
-                        ct += grid[i][h] == MY ? 1 : 0;
-                    }
-                }
-                return ct;
-            }
+//            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
+//                int ct = 0;
+//                for (int i = i1; i <= i2; ++i) {
+//                    for (int h = h1; h <= h2; ++h) {
+//                        ct += grid[i][h] == MY ? 1 : 0;
+//                    }
+//                }
+//                return ct;
+//            }
             return count(i1, i2, h1, h2, myPlayer);
         }
 
@@ -547,7 +547,7 @@ public class Player {
 
     public static class PlayerState {
 
-        final int i, h;
+        public final int i, h;
         final int backInTimeLeft;
 
         public PlayerState(int i, int h, int backInTimeLeft) {
