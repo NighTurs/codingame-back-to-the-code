@@ -83,7 +83,7 @@ public class Player {
     public static double maxValueFor(GameState gameState, int i1, int i2, int h1, int h2) {
         int dist = distanceToRec(i1, i2, h1, h2, gameState.getMyPlayer().i, gameState.getMyPlayer().h);
         int x = dist;
-        int y = gameState.fenwick.countEmpty(i1, i2, h1, h2) + dist - 1;
+        int y = gameState.fenwick.countEmpty(i1, i2, h1, h2) + (dist == 0 ? 0 : (dist - 1));
         int[] z = computeHazzard(gameState, i1, i2, h1, h2);
         return valueFor(gameState, x, y, z);
     }
@@ -104,9 +104,9 @@ public class Player {
         double k1 = k[gameState.opponentCount - 1][0];
         double k2 = k[gameState.opponentCount - 1][1];
         double k3 = k[gameState.opponentCount - 1][2];
-        double value = Math.pow(1.0 / x, k1) * Math.pow(y, k2);
+        double value = Math.pow(1.0 / (x == 0 ? 0.5 : x), k1) * Math.pow(y, k2);
         for (int i = 0; i < gameState.opponentCount; i++) {
-            value *= Math.pow(1.0 / z[i], k3);
+            value *= Math.pow(z[i], k3);
         }
         return value;
     }

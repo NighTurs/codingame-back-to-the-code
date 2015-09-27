@@ -332,6 +332,24 @@ public class PlayerTest {
         assertEquals(700 - 5, f.countEmpty(0, 19, 0, 34));
     }
 
+    @Test
+    public void testComputeValue() {
+        int[][] grid = emptyGrid();
+        grid[0][0] = 0;
+        grid[1][0] = 0;
+        grid[1][1] = 0;
+        grid[2][1] = 0;
+        grid[2][2] = 0;
+        grid[3][2] = 0;
+        PlayerState myPlayerState = new PlayerState(1, 1, 0);
+        GameState gameState = new GameState(0, 1, Arrays.asList(myPlayerState, new PlayerState(5, 5, 0)), grid);
+        double val1 = Player.computeValue(gameState, 0, 1, 0, 1);
+        double val2 = Player.computeValue(gameState, 2, 3, 1, 2);
+        double maxVal1 = Player.maxValueFor(gameState, 0, 1, 0, 1);
+        assertTrue(maxVal1 > val2);
+        assertTrue(val1 > val2);
+    }
+
     private int[][] emptyGrid() {
         int[][] grid = new int[Player.N][Player.M];
         for (int i = 0; i < Player.N; i++) {
