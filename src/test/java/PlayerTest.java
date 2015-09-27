@@ -299,6 +299,25 @@ public class PlayerTest {
         }
     }
 
+    @Test
+    public void testFenwick() {
+        int[][] grid = emptyGrid();
+        grid[0][0] = 0;
+        grid[2][2] = 0;
+        grid[4][4] = 0;
+        grid[5][8] = 0;
+        grid[19][34] = 0;
+        Fenwick f = new Fenwick(grid);
+        assertEquals(2, f.countMy(0, 2, 0, 2));
+        assertEquals(1, f.countMy(0, 0, 0, 0));
+        assertEquals(5, f.countMy(0, 19, 0, 34));
+        assertEquals(2, f.countMy(3, 8, 3, 8));
+        assertEquals(0, f.countMy(1, 1, 1, 1));
+        assertEquals(7, f.countEmpty(0, 2, 0, 2));
+        assertEquals(1, f.countEmpty(1, 1, 1, 1));
+        assertEquals(700 - 5, f.countEmpty(0, 19, 0, 34));
+    }
+
     private int[][] emptyGrid() {
         int[][] grid = new int[Player.N][Player.M];
         for (int i = 0; i < Player.N; i++) {
