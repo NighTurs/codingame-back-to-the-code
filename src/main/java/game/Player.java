@@ -83,7 +83,7 @@ public class Player {
     public static double maxValueFor(GameState gameState, int i1, int i2, int h1, int h2) {
         int dist = distanceToRec(i1, i2, h1, h2, gameState.getMyPlayer().i, gameState.getMyPlayer().h);
         int x = dist;
-        int y = gameState.fenwick.countEmpty(i1, i2, h1, h2) + (dist == 0 ? 0 : (dist - 1));
+        int y = (i2 - i1 + 1) * (h2 - h1 + 1) + (dist == 0 ? 0 : (dist - 1));
         int[] z = computeHazzard(gameState, i1, i2, h1, h2);
         return valueFor(gameState, x, y, z);
     }
@@ -98,7 +98,7 @@ public class Player {
         return valueFor(gameState, x, y, z);
     }
 
-    static final double k[][] = new double[][] {{1.0, 1.0, 0.3}, {1.0, 1.0, 0.1}, {5.0, 1.0, 0.0}};
+    static final double k[][] = new double[][] {{0.6, 1.0, 0.35}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -106,7 +106,7 @@ public class Player {
         double k3 = k[gameState.opponentCount - 1][2];
         double value = Math.pow(1.0 / (x == 0 ? 0.5 : x), k1) * Math.pow(y, k2);
         for (int i = 0; i < gameState.opponentCount; i++) {
-            value *= Math.pow(z[i], k3);
+            value *= Math.pow((z[i] == 0 ? 0.5 : z[i]), k3);
         }
         return value;
     }
@@ -411,7 +411,7 @@ public class Player {
         }
 
         public int countEmpty(int i1, int i2, int h1, int h2) {
-            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 10) {
+            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
                 int ct = 0;
                 for (int i = i1; i <= i2; ++i) {
                     for (int h = h1; h <= h2; ++h) {
@@ -424,7 +424,7 @@ public class Player {
         }
 
         public int countMy(int i1, int i2, int h1, int h2) {
-            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 10) {
+            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
                 int ct = 0;
                 for (int i = i1; i <= i2; ++i) {
                     for (int h = h1; h <= h2; ++h) {
