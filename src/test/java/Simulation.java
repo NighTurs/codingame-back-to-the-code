@@ -98,9 +98,12 @@ public class Simulation {
                 System.out.println();
             }
             for (int i = 0; i < Np; i++) {
-                System.out.println("Profile x=" + profiles[i][0] + ", y=" + profiles[i][1] + "z=" + profiles[i][2] +
-                        ", current scores " + scores[i][0] + ", " + scores[i][1] + ", " + scores[i][2] + ", " +
-                        scores[i][3]);
+                System.out.print("Profile x=" + profiles[i][0] + ", y=" + profiles[i][1] + "z=" + profiles[i][2] +
+                        ", current scores " + scores[i][0]);
+                for (int h = 1; h < NPLAYERS; h++) {
+                    System.out.print(", " + scores[i][h]);
+                }
+                System.out.println();
             }
         }
     }
