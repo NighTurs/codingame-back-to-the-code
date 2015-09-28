@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -53,13 +52,35 @@ public class Player {
         }
     }
 
+
+    public static int CEMPTY;
+    public static int CMY;
     public static Turn makeTurn(GameState gameState) {
         double maxValue = Double.MIN_VALUE;
         StepDesc bestStep = new StepDesc();
-        for (int i1 = 0; i1 < N; i1++) {
-            for (int h1 = 0; h1 < M; h1++) {
-                for (int i2 = N - 1; i2 >= i1 + 1; i2--) {
-                    for (int h2 = M - 1; h2 >= h1 + 1; h2--) {
+
+        int[][] grid = gameState.grid;
+        int[] cempty = new int[Player.M];
+        int[] cmy = new int[Player.M];
+        CEMPTY = 0;
+        CMY = 0;
+
+        for (int i1 = 0; i1 < Player.N; i1++) {
+            for (int h = 0; h < Player.M; h++) {
+                cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
+                cmy[h] = grid[i1][h] == MY ? 1 : 0;
+            }
+            for (int i2 = i1 + 1; i2 < Player.N; i2++) {
+                for (int h = 0; h < Player.M; h++) {
+                    cempty[h] += grid[i2][h] == EMPTY ? 1 : 0;
+                    cmy[h] += grid[i2][h] == MY ? 1 : 0;
+                }
+                for (int h1 = 0; h1 < Player.M; h1++) {
+                    CEMPTY = cempty[h1];
+                    CMY = cmy[h1];
+                    for (int h2 = h1 + 1; h2 < Player.M; h2++) {
+                        CEMPTY += cempty[h2];
+                        CMY += cmy[h2];
                         if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
                             double curValue = computeValue(gameState, i1, i2, h1, h2);
                             if (curValue > maxValue) {
@@ -83,7 +104,7 @@ public class Player {
     public static double maxValueFor(GameState gameState, int i1, int i2, int h1, int h2) {
         int dist = distanceToRec(i1, i2, h1, h2, gameState.getMyPlayer().i, gameState.getMyPlayer().h);
         int x = dist;
-        int y = (i2 - i1 + 1) * (h2 - h1 + 1) + (dist == 0 ? 0 : (dist - 1));
+        int y = CEMPTY + (dist == 0 ? 0 : (dist - 1));
         int[] z = computeHazzard(gameState, i1, i2, h1, h2);
         return valueFor(gameState, x, y, z);
     }
@@ -98,7 +119,7 @@ public class Player {
         return valueFor(gameState, x, y, z);
     }
 
-    public static double k[][] = new double[][] {{0.6, 1.0, 0.35}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+    public static double k[][] = new double[][] {{1.0, 1.5, 0.0}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -125,7 +146,7 @@ public class Player {
 
     public static int computePoints(GameState gameState, StepDesc stepDesc, int i1, int i2, int h1, int h2) {
         int[][] grid = gameState.grid;
-        int points = gameState.fenwick.countEmpty(i1, i2, h1, h2);
+        int points = CEMPTY;
         int curI = gameState.getMyPlayer().i;
         int curH = gameState.getMyPlayer().h;
         boolean once = false;
@@ -385,9 +406,8 @@ public class Player {
 
     // O(N * M)
     public static boolean isValidRectangle(GameState gameState, int i1, int i2, int h1, int h2) {
-        int countEmpty = gameState.fenwick.countEmpty(i1, i2, h1, h2);
-        int countMy = gameState.fenwick.countMy(i1, i2, h1, h2);
-
+        int countEmpty = CEMPTY;
+        int countMy = CMY;
         if ((i2 - i1 + 1) * (h2 - h1 + 1) > countEmpty + countMy || countEmpty == 0) {
             return false;
         }
@@ -396,92 +416,6 @@ public class Player {
 
     public static void debug(String msg) {
         System.err.println(msg);
-    }
-
-    public static class Fenwick {
-
-        int[][] grid = new int[N][M];
-        int[][] empty = new int[N][M];
-        int[][] myPlayer = new int[N][M];
-
-        public Fenwick(int[][] grid) {
-            this.grid = grid;
-            initEmpty(grid);
-            initMy(grid);
-        }
-
-        public int countEmpty(int i1, int i2, int h1, int h2) {
-//            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
-//                int ct = 0;
-//                for (int i = i1; i <= i2; ++i) {
-//                    for (int h = h1; h <= h2; ++h) {
-//                        ct += grid[i][h] == EMPTY ? 1 : 0;
-//                    }
-//                }
-//                return ct;
-//            }
-            return count(i1, i2, h1, h2, empty);
-        }
-
-        public int countMy(int i1, int i2, int h1, int h2) {
-//            if ((i2 - i1 + 1) * (h2 - h1 + 1) < 8) {
-//                int ct = 0;
-//                for (int i = i1; i <= i2; ++i) {
-//                    for (int h = h1; h <= h2; ++h) {
-//                        ct += grid[i][h] == MY ? 1 : 0;
-//                    }
-//                }
-//                return ct;
-//            }
-            return count(i1, i2, h1, h2, myPlayer);
-        }
-
-        private void initMy(int[][] grid) {
-            for (int[] row: myPlayer)
-                Arrays.fill(row, 0);
-            for (int i = 0; i < N; i++) {
-                for (int h = 0; h < M; h++) {
-                    if (grid[i][h] == MY) {
-                        inc(i, h, 1, myPlayer);
-                    }
-                }
-            }
-        }
-
-        private void initEmpty(int[][] grid) {
-            for (int[] row: empty)
-                Arrays.fill(row, 0);
-            for (int i = 0; i < N; i++) {
-                for (int h = 0; h < M; h++) {
-                    if (grid[i][h] == EMPTY) {
-                        inc(i, h, 1, empty);
-                    }
-                }
-            }
-        }
-
-        private int count(int i1, int i2, int h1, int h2, int[][] t) {
-            return count(i2, h2, t) - count(i1 - 1, h2, t) - count(i2, h1 - 1, t) + count(i1 - 1, h1 - 1, t);
-        }
-
-        private int count(int ii, int hh, int[][] t) {
-            if (ii < 0 || hh < 0) {
-                return 0;
-            }
-            int result = 0;
-            for (int i = ii; i >= 0; i = (i & (i + 1)) - 1) {
-                for (int j = hh; j >= 0; j = (j & (j + 1)) - 1) {
-                    result += t[i][j];
-                }
-            }
-            return result;
-        }
-
-        private void inc(int ii, int hh, int delta, int[][] t) {
-            for (int i = ii; i < N; i = (i | (i + 1)))
-                for (int j = hh; j < M; j = (j | (j + 1)))
-                    t[i][j] += delta;
-        }
     }
 
     public static class StepDesc {
@@ -495,7 +429,6 @@ public class Player {
 
     public static class GameState {
 
-        final Fenwick fenwick;
         final int gameRound;
         final int opponentCount;
         final List<PlayerState> players;
@@ -506,7 +439,6 @@ public class Player {
             this.opponentCount = opponentCount;
             this.players = players;
             this.grid = grid;
-            this.fenwick = new Fenwick(grid);
         }
 
         public PlayerState getMyPlayer() {

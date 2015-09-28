@@ -34,66 +34,7 @@ struct PlayerState {
     int backInTimeLeft;
 };
 
-struct Fenwick {
-    int empty[N][M];
-    int myPlayer[N][M];
-
-    int countEmpty(int i1, int i2, int h1, int h2) {
-        return count(i1, i2, h1, h2, empty);
-    }
-
-    int countMy(int i1, int i2, int h1, int h2) {
-        return count(i1, i2, h1, h2, myPlayer);
-    }
-
-    void initMy(int grid[N][M]) {
-        fill(&myPlayer[0][0], &myPlayer[0][0] + sizeof(myPlayer) / sizeof(myPlayer[0][0]), 0 );
-        for (int i = 0; i < N; i++) {
-            for (int h = 0; h < M; h++) {
-                if (grid[i][h] == MY) {
-                    inc(i, h, 1, myPlayer);
-                }
-            }
-        }
-    }
-
-    void initEmpty(int grid[N][M]) {
-        fill(&empty[0][0], &empty[0][0] + sizeof(empty) / sizeof(empty[0][0]), 0 );
-        for (int i = 0; i < N; i++) {
-            for (int h = 0; h < M; h++) {
-                if (grid[i][h] == EMPTY) {
-                    inc(i, h, 1, empty);
-                }
-            }
-        }
-    }
-
-    int count(int i1, int i2, int h1, int h2, int t[N][M]) {
-        return count(i2, h2, t) - count(i1 - 1, h2, t) - count(i2, h1 - 1, t) + count(i1 - 1, h1 - 1, t);
-    }
-
-    int count(int ii, int hh, int t[N][M]) {
-        if (ii < 0 || hh < 0) {
-            return 0;
-        }
-        int result = 0;
-        for (int i = ii; i >= 0; i = (i & (i + 1)) - 1) {
-            for (int j = hh; j >= 0; j = (j & (j + 1)) - 1) {
-                result += t[i][j];
-            }
-        }
-        return result;
-    }
-
-    void inc(int ii, int hh, int delta, int t[N][M]) {
-        for (int i = ii; i < N; i = (i | (i + 1)))
-            for (int j = hh; j < M; j = (j | (j + 1)))
-                t[i][j] += delta;
-    }
-};
-
 struct GameState {
-    Fenwick fenwick;
     int gameRound;
     int opponentCount;
     vector<PlayerState> players;
@@ -119,12 +60,16 @@ void moveLeft(int x, int y);
 void moveRight(int x, int y);
 bool isValidRectangle(GameState & gameState, int i1, int i2, int h1, int h2);
 
-double k[][3] = {{0.6, 1.0, 0.35}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+double k[][3] = {{1.0, 1.5, 0.0}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
 int hazz[4];
 StepDesc stepDesc;
 // return of move methods
 int moveI = 0;
 int moveH = 0;
+int CEMPTY;
+int CMY;
+int cempty[M];
+int cmy[M];
 
 int main() {
     int opponentCount; // Opponent count
@@ -136,6 +81,7 @@ int main() {
         cin >> gameRound; cin.ignore();
         PlayerState state;
         GameState gameState;
+        gameState.gameRound = gameRound;
         gameState.opponentCount = opponentCount;
         cin >> state.h >> state.i >> state.backInTimeLeft; cin.ignore();
         gameState.players.push_back(state);
@@ -155,8 +101,6 @@ int main() {
             }
         }
 
-        gameState.fenwick.initMy(gameState.grid);
-        gameState.fenwick.initEmpty(gameState.grid);
         Turn turn = makeTurn(gameState);
         turn.print();
     }
@@ -167,10 +111,25 @@ Turn makeTurn(GameState & gameState) {
     StepDesc bestStep;
     bestStep.toI = 0;
     bestStep.toH = 0;
+    CEMPTY = 0;
+    CMY = 0;
+
     for (int i1 = 0; i1 < N; i1++) {
-        for (int h1 = 0; h1 < M; h1++) {
-            for (int i2 = N - 1; i2 >= i1 + 1; i2--) {
-                for (int h2 = M - 1; h2 >= h1 + 1; h2--) {
+        for (int h = 0; h < M; h++) {
+            cempty[h] = gameState.grid[i1][h] == EMPTY ? 1 : 0;
+            cmy[h] = gameState.grid[i1][h] == MY ? 1 : 0;
+        }
+        for (int i2 = i1 + 1; i2 < N; i2++) {
+            for (int h = 0; h < M; h++) {
+                cempty[h] += gameState.grid[i2][h] == EMPTY ? 1 : 0;
+                cmy[h] += gameState.grid[i2][h] == MY ? 1 : 0;
+            }
+            for (int h1 = 0; h1 < M; h1++) {
+                CEMPTY = cempty[h1];
+                CMY = cmy[h1];
+                for (int h2 = h1 + 1; h2 < M; h2++) {
+                    CEMPTY += cempty[h2];
+                    CMY += cmy[h2];
                     if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
                         double curValue = computeValue(gameState, i1, i2, h1, h2);
                         if (curValue > maxValue) {
@@ -195,7 +154,7 @@ Turn makeTurn(GameState & gameState) {
 double maxValueFor(GameState & gameState, int i1, int i2, int h1, int h2) {
     int dist = distanceToRec(i1, i2, h1, h2, gameState.players[0].i, gameState.players[0].h);
     int x = dist;
-    int y = (i2 - i1 + 1) * (h2 - h1 + 1) + (dist == 0 ? 0 : (dist - 1));
+    int y = CEMPTY + (dist == 0 ? 0 : (dist - 1));
     computeHazzard(gameState, i1, i2, h1, h2);
     return valueFor(gameState, x, y, hazz);
 }
@@ -231,7 +190,7 @@ void computeHazzard(GameState & gameState, int i1, int i2, int h1, int h2) {
 }
 
 int computePoints(GameState & gameState, StepDesc & stepDesc, int i1, int i2, int h1, int h2) {
-    int points = gameState.fenwick.countEmpty(i1, i2, h1, h2);
+    int points = CEMPTY;
     int curI = gameState.players[0].i;
     int curH = gameState.players[0].h;
     bool once = false;
@@ -484,8 +443,8 @@ void moveRight(int x, int y) {
 
 // O(N * M)
 bool isValidRectangle(GameState & gameState, int i1, int i2, int h1, int h2) {
-    int countEmpty = gameState.fenwick.countEmpty(i1, i2, h1, h2);
-    int countMy = gameState.fenwick.countMy(i1, i2, h1, h2);
+    int countEmpty = CEMPTY;
+    int countMy = CMY;
 
     if ((i2 - i1 + 1) * (h2 - h1 + 1) > countEmpty + countMy || countEmpty == 0) {
         return false;

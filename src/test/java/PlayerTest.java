@@ -194,11 +194,13 @@ public class PlayerTest {
         Player.stepDesc.toRec = false;
         Player.stepDesc.pointI = 2;
         Player.stepDesc.pointH = 0;
+        initCs(0, 2, 0, 2, grid);
         // 9 possible
         assertEquals(7, Player.computePoints(gameState, Player.stepDesc, 0, 2, 0, 2));
 
         myPlayerState = new PlayerState(2, 2, 0);
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 2, 0, 2, grid);
         assertEquals(6, Player.computePoints(gameState, Player.stepDesc, 0, 2, 0, 2));
 
         grid[2][2] = -1;
@@ -207,6 +209,7 @@ public class PlayerTest {
         Player.stepDesc.toRec = true;
         myPlayerState = new PlayerState(3, 3, 0);
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 2, 0, 2, grid);
         assertEquals(10, Player.computePoints(gameState, Player.stepDesc, 0, 2, 0, 2));
     }
 
@@ -265,19 +268,23 @@ public class PlayerTest {
         PlayerState myPlayerState = new PlayerState(3, 3, 0);
         int[][] grid = emptyGrid();
         GameState gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 2, 0, 2, grid);
         assertTrue(Player.isValidRectangle(gameState, 0, 2, 0, 2));
         grid[0][0] = 1;
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 2, 0, 2, grid);
         assertFalse(Player.isValidRectangle(gameState, 0, 2, 0, 2));
         grid[0][0] = 0;
         grid[0][1] = 0;
         grid[1][0] = 0;
         grid[1][1] = 0;
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 1, 0, 1, grid);
         assertFalse(Player.isValidRectangle(gameState, 0, 1, 0, 1));
         grid = emptyGrid();
         grid[1][1] = 1;
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(0, 2, 0, 2, grid);
         assertFalse(Player.isValidRectangle(gameState, 0, 2, 0, 2));
         grid = emptyGrid();
         for (int i = 18; i <= 19; i++) {
@@ -286,6 +293,7 @@ public class PlayerTest {
             }
         }
         gameState = new GameState(0, 1, Collections.singletonList(myPlayerState), grid);
+        initCs(18, 19, 21, 25, grid);
         assertFalse(Player.isValidRectangle(gameState, 18, 19, 21, 25));
     }
 
@@ -312,25 +320,6 @@ public class PlayerTest {
     }
 
     @Test
-    public void testFenwick() {
-        int[][] grid = emptyGrid();
-        grid[0][0] = 0;
-        grid[2][2] = 0;
-        grid[4][4] = 0;
-        grid[5][8] = 0;
-        grid[19][34] = 0;
-        Fenwick f = new Fenwick(grid);
-        assertEquals(2, f.countMy(0, 2, 0, 2));
-        assertEquals(1, f.countMy(0, 0, 0, 0));
-        assertEquals(5, f.countMy(0, 19, 0, 34));
-        assertEquals(2, f.countMy(3, 8, 3, 8));
-        assertEquals(0, f.countMy(1, 1, 1, 1));
-        assertEquals(7, f.countEmpty(0, 2, 0, 2));
-        assertEquals(1, f.countEmpty(1, 1, 1, 1));
-        assertEquals(700 - 5, f.countEmpty(0, 19, 0, 34));
-    }
-
-    @Test
     public void testComputeValue() {
         int[][] grid = emptyGrid();
         grid[0][0] = 0;
@@ -341,7 +330,9 @@ public class PlayerTest {
         grid[3][2] = 0;
         PlayerState myPlayerState = new PlayerState(1, 1, 0);
         GameState gameState = new GameState(0, 1, Arrays.asList(myPlayerState, new PlayerState(5, 5, 0)), grid);
+        initCs(0, 1, 0, 1, grid);
         double val1 = Player.computeValue(gameState, 0, 1, 0, 1);
+        initCs(2, 3, 1, 2, grid);
         double val2 = Player.computeValue(gameState, 2, 3, 1, 2);
         double maxVal1 = Player.maxValueFor(gameState, 0, 1, 0, 1);
         assertTrue(maxVal1 > val2);
@@ -543,5 +534,18 @@ public class PlayerTest {
             }
         }
         return grid;
+    }
+
+    private void initCs(int i1, int i2, int h1, int h2, int[][] grid) {
+        int cempty = 0;
+        int cmy = 0;
+        for (int i = i1; i <= i2; i++) {
+            for (int h = h1; h <= h2; h++) {
+                cempty += grid[i][h] == Player.EMPTY ? 1 : 0;
+                cmy += grid[i][h] == Player.MY ? 1 : 0;
+            }
+        }
+        Player.CEMPTY = cempty;
+        Player.CMY = cmy;
     }
 }
