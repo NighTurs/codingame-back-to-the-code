@@ -8,9 +8,9 @@ import java.util.Random;
 import java.util.Set;
 
 public class Simulation {
+
     int Np = 18;
-    double profiles[][] = {
-            {0.5, 1.0, 0.0},
+    double profiles[][] = {{0.5, 1.0, 0.0},
             {0.1, 1.0, 0.0},
             {1.0, 1.0, 0.0},
             {0.5, 1.5, 0.0},
@@ -27,9 +27,7 @@ public class Simulation {
             {1.0, 1.0, 0.6},
             {0.5, 1.5, 0.6},
             {0.1, 1.5, 0.6},
-            {1.0, 1.5, 0.6}
-    };
-
+            {1.0, 1.5, 0.6}};
     int NPLAYERS = 3;
     int NROUNDS = 300;
 
@@ -37,20 +35,23 @@ public class Simulation {
     public void testCrash() {
         int[][] scores = new int[Np][NPLAYERS];
         Random rand = new Random();
-        while(true) {
+        while (true) {
             System.out.println("NEW GAME");
             int[] profs = new int[NPLAYERS];
             Player.PlayerState[] states = new Player.PlayerState[NPLAYERS];
             int[][] grid = emptyGrid();
             for (int i = 0; i < NPLAYERS; i++) {
                 profs[i] = Math.abs(rand.nextInt()) % Np;
-                states[i] = new Player.PlayerState(Math.abs(rand.nextInt()) % Player.N, Math.abs(rand.nextInt()) % Player.M, 0);
+                states[i] = new Player.PlayerState(Math.abs(rand.nextInt()) % Player.N,
+                        Math.abs(rand.nextInt()) % Player.M,
+                        0);
                 System.out.println("Player : " + states[i].i + " " + states[i].h);
                 grid[states[i].i][states[i].h] = i;
             }
             for (int i = 0; i < NROUNDS * NPLAYERS; i++) {
                 long st = System.currentTimeMillis();
-                Player.GameState gameState = new Player.GameState(0, 1, Arrays.asList(states), grid);
+                Player.GameState gameState =
+                        new Player.GameState(i / NPLAYERS + 1, NPLAYERS - 1, Arrays.asList(states), grid);
                 //                System.out.println("Current profile " + profs[0]);
                 Player.k[NPLAYERS - 2][0] = profiles[profs[0]][0];
                 Player.k[NPLAYERS - 2][1] = profiles[profs[0]][1];
@@ -81,8 +82,8 @@ public class Simulation {
                 }
             }
             int pos[] = winners(grid);
-//            System.out.println(pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3]);
-//            System.out.println(profs[0] + " " + profs[1] + " " + profs[2] + " " + profs[3]);
+            //            System.out.println(pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3]);
+            //            System.out.println(profs[0] + " " + profs[1] + " " + profs[2] + " " + profs[3]);
             for (int i = 0; i < NPLAYERS; i++) {
                 int ind = pos[i];
                 scores[profs[ind]][i]++;
@@ -131,6 +132,7 @@ public class Simulation {
 
     boolean[][] c = new boolean[Player.N][Player.M];
     int[][] b = new int[1000][2];
+
     private int[][] handle(int[][] grid) {
         for (boolean[] row : c) {
             Arrays.fill(row, false);
