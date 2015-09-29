@@ -10,7 +10,26 @@ import java.util.Set;
 public class Simulation {
 
     int Np = 18;
-    double profiles[][] = {{0.5, 1.0, 0.0},
+    double profiles1[][] = {
+            {1.0, 2.0, 0.0},
+            {1.0, 1.7, 0.0},
+            {0.9, 2.0, 0.0},
+            {0.7, 1.7, 0.0},
+            {0.3, 1.7, 0.0},
+            {0.5, 3.0, 0.0},
+            {1.0, 2.0, 0.4},
+            {1.5, 4.0, 0.4},
+            {0.5, 1.0, 0.0},
+            {1.0, 1.0, 0.0},
+            {0.5, 1.5, 0.0},
+            {1.0, 1.5, 0.0},
+            {0.5, 1.0, 0.3},
+            {0.5, 1.5, 0.3},
+            {1.0, 1.5, 0.3},
+            {0.5, 1.0, 0.6},
+            {0.5, 1.5, 0.6},
+            {1.0, 1.5, 0.6}};
+    double profiles2[][] = {{0.5, 1.0, 0.0},
             {0.1, 1.0, 0.0},
             {1.0, 1.0, 0.0},
             {0.5, 1.5, 0.0},
@@ -28,11 +47,30 @@ public class Simulation {
             {0.5, 1.5, 0.6},
             {0.1, 1.5, 0.6},
             {1.0, 1.5, 0.6}};
-    int NPLAYERS = 3;
-    int NROUNDS = 300;
+    double profiles3[][] = {{0.5, 1.0, 0.0},
+            {0.1, 1.0, 0.0},
+            {1.0, 1.0, 0.0},
+            {0.5, 1.5, 0.0},
+            {0.1, 1.5, 0.0},
+            {1.0, 1.5, 0.0},
+            {0.5, 1.0, 0.3},
+            {0.1, 1.0, 0.3},
+            {1.0, 1.0, 0.3},
+            {0.5, 1.5, 0.3},
+            {0.1, 1.5, 0.3},
+            {1.0, 1.5, 0.3},
+            {0.5, 1.0, 0.6},
+            {0.1, 1.0, 0.6},
+            {1.0, 1.0, 0.6},
+            {0.5, 1.5, 0.6},
+            {0.1, 1.5, 0.6},
+            {1.0, 1.5, 0.6}};
+    int NPLAYERS = 4;
+    int NROUNDS = 250;
 
     @Test
     public void testCrash() {
+        double[][] profiles = NPLAYERS == 2 ? profiles1 : NPLAYERS == 3 ? profiles2 : profiles3;
         int[][] scores = new int[Np][NPLAYERS];
         Random rand = new Random();
         while (true) {
@@ -52,7 +90,7 @@ public class Simulation {
                 long st = System.currentTimeMillis();
                 Player.GameState gameState =
                         new Player.GameState(i / NPLAYERS + 1, NPLAYERS - 1, Arrays.asList(states), grid);
-                //                System.out.println("Current profile " + profs[0]);
+//                                System.out.println("Current profile " + profs[0]);
                 Player.k[NPLAYERS - 2][0] = profiles[profs[0]][0];
                 Player.k[NPLAYERS - 2][1] = profiles[profs[0]][1];
                 Player.k[NPLAYERS - 2][2] = profiles[profs[0]][2];
