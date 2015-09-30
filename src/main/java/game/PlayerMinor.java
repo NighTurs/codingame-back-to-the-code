@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class PlayerMinor {
 
@@ -97,6 +94,13 @@ public class PlayerMinor {
                 }
             }
         }
+
+        double val = linesMethod(gameState);
+        if (maxValue < val) {
+            bestStep.toI = moveI;
+            bestStep.toH = moveH;
+        }
+
         return new Turn(bestStep.toH, bestStep.toI, 0);
     }
 
@@ -520,18 +524,26 @@ public class PlayerMinor {
         }
     }
 
-//    static public double linesMethod(GameState gameState) {
-//        int[][] grid = gameState.grid;
-//        for (int lineI = -1; lineI < N; lineI++) {
-//            for (int lineH = -1; lineH < M; lineH++) {
-//                if (lineH == -1 ^ lineI == -1) {
-//
-//
-//
-//                }
-//            }
-//        }
-//    }
+    static public double linesMethod(GameState gameState) {
+        double maxValue = Double.MIN_VALUE;
+        int moveToI = 0;
+        int moveToH = 0;
+        for (int lineI = -1; lineI < N; lineI++) {
+            for (int lineH = -1; lineH < M; lineH++) {
+                if (lineH == -1 ^ lineI == -1) {
+                    double value = islandsForLine(gameState, lineI, lineH);
+                    if (value > maxValue) {
+                        maxValue = value;
+                        moveToI = moveI;
+                        moveToH = moveH;
+                    }
+                }
+            }
+        }
+        moveI = moveToI;
+        moveH = moveToH;
+        return maxValue;
+    }
 
     public static int[][] c = new int[N][M];
     public static int[][] b = new int[N * M + 1][2];
@@ -544,37 +556,115 @@ public class PlayerMinor {
     public static int[] need = new int[M];
     public static boolean[] visitedIsland = new boolean[M];
     public static int[] islandGroup = new int[M];
+    public static int[] islandSum = new int[M];
     public static int MARK = 1;
-//    public static double islandsForLine(GameState gameState, int lineI, int lineH) {
-//        sgNeedN = 0;
-//        conN = 0;
-//        Arrays.fill(needOnInd, 0);
-//        Arrays.fill(need, 0);
-//        Arrays.fill(visitedIsland, false);
-//        for (int[] row : islandHazz) {
-//            Arrays.fill(row, Integer.MAX_VALUE);
-//        }
-//        int[][] grid = gameState.grid;
-//        int bsfInd = 0;
-//        for (int startI = 0; startI < N; startI++) {
-//            for (int startH = 0; startH < M; startH++) {
-//                if (startI != lineI && startH != lineH && c[startI][startH] != MARK && grid[startI][startH] == EMPTY) {
-//                    bsf(gameState, lineI, lineH, startI, startH, ++bsfInd);
-//                }
-//            }
-//        }
-//        bsfInd++;
-//        for (int i = 0; i < bsfInd; i++) {
-//            for (int h = 0; h < bsfInd; h++) {
-//                islandsGraph[i][h] = 0;
-//            }
-//        }
-//        for (int i = 0; i < conN; i++) {
-//            islandsGraph[con[i][0]][con[i][1]]++;
-//            islandsGraph[con[i][1]][con[i][0]]++;
-//        }
-//        islandCons = 0;
-//    }
+    public static Set<Integer> neededPointsSet = new HashSet<Integer>();
+    public static double islandsForLine(GameState gameState, int lineI, int lineH) {
+        sgNeedN = 0;
+        conN = 0;
+        MARK++;
+        Arrays.fill(needOnInd, 0);
+        Arrays.fill(need, 0);
+        Arrays.fill(visitedIsland, false);
+        for (int[] row : islandHazz) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+        int[][] grid = gameState.grid;
+        int moveToI = 0;
+        int moveToH = 0;
+        int bsfInd = 0;
+        for (int startI = 0; startI < N; startI++) {
+            for (int startH = 0; startH < M; startH++) {
+                if (startI != lineI && startH != lineH && c[startI][startH] != MARK && grid[startI][startH] == EMPTY) {
+                    bsfInd++;
+                    islandSum[bsfInd] = bsf(gameState, lineI, lineH, startI, startH, bsfInd);
+                }
+            }
+        }
+        bsfInd++;
+        for (int i = 1; i < bsfInd; i++) {
+            for (int h = 1; h < bsfInd; h++) {
+                islandsGraph[i][h] = 0;
+            }
+        }
+        for (int i = 0; i < conN; i++) {
+            islandsGraph[con[i][0]][con[i][1]]++;
+            islandsGraph[con[i][1]][con[i][0]]++;
+        }
+
+        double maxValue = Double.MIN_VALUE;
+        for (int jj = 1; jj < bsfInd; jj++) {
+            if (!visitedIsland[jj]) {
+                Arrays.fill(hazz, Integer.MAX_VALUE);
+                islandCons = 0;
+                int groupN = relatedIslands(jj, bsfInd, 0) + 1;
+                int sharedPoints = islandCons;
+                int minDist = Integer.MAX_VALUE;
+                int minDistPointI = 0;
+                int minDistPointH = 0;
+                int left = Integer.MAX_VALUE;
+                int right = Integer.MIN_VALUE;
+                neededPointsSet.clear();
+                int wholeSum = 0;
+                for (int i = 0; i < groupN; i++) {
+                    int islInd = islandGroup[i];
+                    for (int ii = 0; ii < sgNeedN; ii++) {
+                        if (sgNeed[ii][0] == islInd) {
+                            if (neededPointsSet.contains(sgNeed[ii][1])) {
+                                sharedPoints++;
+                            } else {
+                                neededPointsSet.add(sgNeed[ii][1]);
+                            }
+                        }
+                    }
+                    wholeSum += islandSum[islInd];
+                    for (int hh = 0; hh < gameState.opponentCount; hh++) {
+                        hazz[hh] = Math.min(hazz[hh], islandHazz[islInd][hh]);
+                    }
+                    for (int h = 0; h < M; h++) {
+                        if (need[h] == islInd) {
+                            neededPointsSet.add(h);
+                        }
+                    }
+                }
+                for (Integer i : neededPointsSet) {
+                    if (i > right) {
+                        right = i;
+                    }
+                    if (i < left) {
+                        left = i;
+                    }
+                    int pointI = 0;
+                    int pointH = 0;
+                    if (lineI == -1) {
+                        pointI = i;
+                        pointH = lineH;
+                    } else {
+                        pointI = lineI;
+                        pointH = i;
+                    }
+                    int dis = distanceToPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, pointI, pointH);
+                    if (minDist > dis) {
+                        minDist = dis;
+                        minDistPointI = pointI;
+                        minDistPointH = pointH;
+                    }
+                }
+                int x = (minDist == 0 ? 0 : minDist - 1) + right - left + 1;
+                int y = wholeSum - sharedPoints;
+                double value = valueFor(gameState, x, y, hazz);
+                if (value > maxValue) {
+                    maxValue = value;
+                    moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, minDistPointI, minDistPointH);
+                    moveToI = moveI;
+                    moveToH = moveH;
+                }
+            }
+        }
+        moveI = moveToI;
+        moveH = moveToH;
+        return maxValue;
+    }
 
     public static int islandCons = 0;
     public static int relatedIslands(int st, int count, int groupInd) {
@@ -590,11 +680,13 @@ public class PlayerMinor {
     }
 
     public static int[] curNeed = new int[M];
-    public static int[] curSgNeed = new int[M];
+    public static int[] curSgNeed = new int[M * 2];
     public static int[] needOnInd = new int[M];
     public static int bsf(GameState gameState, int lineI, int lineH, int startI, int startH, int myIndx) {
         int[][] grid = gameState.grid;
         c[startI][startH] = MARK;
+
+        // TODO : check needed condition for first step
         b[0][0] = startI;
         b[0][1] = startH;
         int i = 0;
@@ -620,7 +712,7 @@ public class PlayerMinor {
                     if (!(j1 == 0 && j2 == 0)) {
                         int ti = ci + j1;
                         int th = ch + j2;
-                        if (ti < 0 || th < 0 || ti >= N - 1 || th >= M - 1 || c[ti][th] == MARK) {
+                        if (ti < 0 || th < 0 || ti >= N || th >= M || c[ti][th] == MARK) {
                             continue;
                         }
                         if (grid[ti][th] != MY && grid[ti][th] != EMPTY) {

@@ -196,6 +196,72 @@ public class PlayerMinorTest {
         assertEquals(4, PlayerMinor.islandGroup[4]);
     }
 
+    @Test
+    public void testIslandsForLine() {
+        String map =
+                "00000000000011100000000000000000000" +
+                "0..........011100011110000000000000" +
+                "0..00000000011100001110000000000000" +
+                "0..01111111111100001100000000000000" +
+                "11111111111111100000000000000000000" +
+                "11111111111111101111100000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111100000000000000000000" +
+                "11111111111111111100000000000000000" +
+                "11111111111111111111110000000000000" +
+                "111111111111111111...0............0" +
+                "111111111111111111...0............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "11111111111111111100000000000000000";
+        int x = 5;
+        int y = 14;
+        int[] z = new int[]{2};
+        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z), testIslandsForLine(map, 3, -1), 1.e-9);
+        map =
+                "00000000000011100000000000000000000" +
+                "0..........011100011110000000000000" +
+                "0.......000011100001110000000000000" +
+                "00........1111100001100000000000000" +
+                "11110...011111100000000000000000000" +
+                "11110...011111101111100000000000000" +
+                "11110000011111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111101000000000000000000" +
+                "11111111111111100000000000000000000" +
+                "11111111111111111100000000000000000" +
+                "11111111111111111111110000000000000" +
+                "111111111111111111...0............0" +
+                "111111111111111111...0............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "1111111111111111110...............0" +
+                "11111111111111111100000000000000000";
+        x = 11;
+        y = 30;
+        z = new int[]{2};
+        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z), testIslandsForLine(map, 3, -1), 1.e-9);
+    }
+
+    private PlayerMinor.GameState fakeGameStateWithOponents(int ops) {
+        return new PlayerMinor.GameState(1, 1, null, null);
+    }
+
+    private double testIslandsForLine(String map, int lineI, int lineH) {
+        PlayerMinor.PlayerState myPlayerState = new PlayerMinor.PlayerState(0, 0, 0);
+        int[][] grid = stringToGrid(map);
+        PlayerMinor.GameState gameState =
+                new PlayerMinor.GameState(0, 1, Arrays.asList(myPlayerState, myPlayerState), grid);
+        return PlayerMinor.islandsForLine(gameState, lineI, lineH);
+    }
+
     private void setIslandGraphEdge(int a, int b, int value) {
         PlayerMinor.islandsGraph[a][b] = value;
         PlayerMinor.islandsGraph[b][a] = value;
