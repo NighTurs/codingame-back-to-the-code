@@ -119,7 +119,7 @@ public class Player {
         return valueFor(gameState, x, y, z);
     }
 
-    public static double k[][] = new double[][] {{1.0, 1.5, 0.0}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+    public static double k[][] = new double[][] {{0.5, 1.0, 0.0}, {1.0, 1.5, 0.3}, {0.5, 1.0, 0.3}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];

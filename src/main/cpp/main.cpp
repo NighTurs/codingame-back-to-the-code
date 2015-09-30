@@ -60,7 +60,7 @@ void moveLeft(int x, int y);
 void moveRight(int x, int y);
 bool isValidRectangle(GameState & gameState, int i1, int i2, int h1, int h2);
 
-double k[][3] = {{1.0, 1.5, 0.0}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+double k[][3] = {{0.5, 1.0, 0.0}, {1.0, 1.5, 0.3}, {0.5, 1.0, 0.3}};
 int hazz[4];
 StepDesc stepDesc;
 // return of move methods
