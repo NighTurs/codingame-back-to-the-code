@@ -542,12 +542,15 @@ public class PlayerMinor {
     public static int conN = 0;
     public static int sgNeedN = 0;
     public static int[] need = new int[M];
+    public static boolean[] visitedIsland = new boolean[M];
+    public static int[] islandGroup = new int[M];
     public static int MARK = 1;
 //    public static double islandsForLine(GameState gameState, int lineI, int lineH) {
 //        sgNeedN = 0;
 //        conN = 0;
 //        Arrays.fill(needOnInd, 0);
 //        Arrays.fill(need, 0);
+//        Arrays.fill(visitedIsland, false);
 //        for (int[] row : islandHazz) {
 //            Arrays.fill(row, Integer.MAX_VALUE);
 //        }
@@ -570,7 +573,21 @@ public class PlayerMinor {
 //            islandsGraph[con[i][0]][con[i][1]]++;
 //            islandsGraph[con[i][1]][con[i][0]]++;
 //        }
+//        islandCons = 0;
 //    }
+
+    public static int islandCons = 0;
+    public static int relatedIslands(int st, int count, int groupInd) {
+        islandGroup[groupInd] = st;
+        visitedIsland[st] = true;
+        for (int i = 0; i < count; i++) {
+            if (islandsGraph[st][i] > 0 && !visitedIsland[i]) {
+                islandCons += islandsGraph[st][i];
+                groupInd = relatedIslands(i, count, groupInd + 1);
+            }
+        }
+        return groupInd;
+    }
 
     public static int[] curNeed = new int[M];
     public static int[] curSgNeed = new int[M];

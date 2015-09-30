@@ -171,6 +171,43 @@ public class PlayerMinorTest {
         assertEquals(3, PlayerMinor.islandHazz[myInx + 1][0]);
     }
 
+    @Test
+    public void testRelatedIslands() {
+        cleanIslandsGrapth();
+        setIslandGraphEdge(0, 1, 5);
+        setIslandGraphEdge(0, 2, 5);
+        assertEquals(2, PlayerMinor.relatedIslands(0, 5, 0));
+        assertEquals(10, PlayerMinor.islandCons);
+        assertEquals(0, PlayerMinor.islandGroup[0]);
+        assertEquals(1, PlayerMinor.islandGroup[1]);
+        assertEquals(2, PlayerMinor.islandGroup[2]);
+
+        cleanIslandsGrapth();
+        setIslandGraphEdge(0, 1, 1);
+        setIslandGraphEdge(1, 2, 5);
+        setIslandGraphEdge(1, 3, 5);
+        setIslandGraphEdge(3, 4, 5);
+        assertEquals(4, PlayerMinor.relatedIslands(0, 5, 0));
+        assertEquals(16, PlayerMinor.islandCons);
+        assertEquals(0, PlayerMinor.islandGroup[0]);
+        assertEquals(1, PlayerMinor.islandGroup[1]);
+        assertEquals(2, PlayerMinor.islandGroup[2]);
+        assertEquals(3, PlayerMinor.islandGroup[3]);
+        assertEquals(4, PlayerMinor.islandGroup[4]);
+    }
+
+    private void setIslandGraphEdge(int a, int b, int value) {
+        PlayerMinor.islandsGraph[a][b] = value;
+        PlayerMinor.islandsGraph[b][a] = value;
+    }
+
+    private void cleanIslandsGrapth() {
+        for (int[] row : PlayerMinor.islandsGraph) {
+            Arrays.fill(row, 0);
+        }
+        Arrays.fill(PlayerMinor.visitedIsland, false);
+    }
+
     private int bfsOnMap(String map, int lineI, int lineH, int startI, int startH, int myIndx, boolean refresh) {
         PlayerMinor.PlayerState myPlayerState = new PlayerMinor.PlayerState(0, 0, 0);
         int[][] grid = stringToGrid(map);
