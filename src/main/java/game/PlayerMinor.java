@@ -58,25 +58,25 @@ public class PlayerMinor {
         StepDesc bestStep = new StepDesc();
 
         int[][] grid = gameState.grid;
-        int[] cempty = new int[Player.M];
-        int[] cmy = new int[Player.M];
+        int[] cempty = new int[M];
+        int[] cmy = new int[M];
         CEMPTY = 0;
         CMY = 0;
 
-        for (int i1 = 0; i1 < Player.N; i1++) {
-            for (int h = 0; h < Player.M; h++) {
+        for (int i1 = 0; i1 < N; i1++) {
+            for (int h = 0; h < M; h++) {
                 cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
                 cmy[h] = grid[i1][h] == MY ? 1 : 0;
             }
-            for (int i2 = i1 + 1; i2 < Player.N; i2++) {
-                for (int h = 0; h < Player.M; h++) {
+            for (int i2 = i1 + 1; i2 < N; i2++) {
+                for (int h = 0; h < M; h++) {
                     cempty[h] += grid[i2][h] == EMPTY ? 1 : 0;
                     cmy[h] += grid[i2][h] == MY ? 1 : 0;
                 }
-                for (int h1 = 0; h1 < Player.M; h1++) {
+                for (int h1 = 0; h1 < M; h1++) {
                     CEMPTY = cempty[h1];
                     CMY = cmy[h1];
-                    for (int h2 = h1 + 1; h2 < Player.M; h2++) {
+                    for (int h2 = h1 + 1; h2 < M; h2++) {
                         CEMPTY += cempty[h2];
                         CMY += cmy[h2];
                         if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
@@ -549,14 +549,14 @@ public class PlayerMinor {
     public static int[][] b = new int[N * M + 1][2];
     public static int[][] sgNeed = new int[N * M][2];
     public static int[][] con = new int[N * M][2];
-    public static int[][] islandsGraph = new int[M][M];
-    public static int[][] islandHazz = new int[M][3];
+    public static int[][] islandsGraph = new int[M * N / 4][M * N / 4];
+    public static int[][] islandHazz = new int[M * N / 4][3];
     public static int conN = 0;
     public static int sgNeedN = 0;
     public static int[] need = new int[M];
-    public static boolean[] visitedIsland = new boolean[M];
+    public static boolean[] visitedIsland = new boolean[M * N / 4];
     public static int[] islandGroup = new int[M];
-    public static int[] islandSum = new int[M];
+    public static int[] islandSum = new int[M * N];
     public static int MARK = 1;
     public static Set<Integer> neededPointsSet = new HashSet<Integer>();
     public static double islandsForLine(GameState gameState, int lineI, int lineH) {
@@ -670,7 +670,7 @@ public class PlayerMinor {
     public static int relatedIslands(int st, int count, int groupInd) {
         islandGroup[groupInd] = st;
         visitedIsland[st] = true;
-        for (int i = 0; i < count; i++) {
+        for (int i = 1; i < count; i++) {
             if (islandsGraph[st][i] > 0 && !visitedIsland[i]) {
                 islandCons += islandsGraph[st][i];
                 groupInd = relatedIslands(i, count, groupInd + 1);
@@ -686,7 +686,6 @@ public class PlayerMinor {
         int[][] grid = gameState.grid;
         c[startI][startH] = MARK;
 
-        // TODO : check needed condition for first step
         b[0][0] = startI;
         b[0][1] = startH;
         int i = 0;
@@ -695,13 +694,16 @@ public class PlayerMinor {
         int curNeedN = 0;
         int value = 1;
         boolean struckBorderOrAlien = false;
+        if (startI == 0 || startH == 0 || startI == N - 1 || startH == M - 1) {
+            struckBorderOrAlien = true;
+        }
 
         for (int jj = 0; jj < gameState.opponentCount; jj++) {
-            islandHazz[myIndx][jj] = Math.min(islandHazz[myIndx][jj],
+            islandHazz[myIndx][jj] =
                     distanceToPoint(gameState.players.get(jj + 1).i,
                             gameState.players.get(jj + 1).h,
                             startI,
-                            startH));
+                            startH);
         }
 
         while (i < kn) {
