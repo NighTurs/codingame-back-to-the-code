@@ -97,6 +97,13 @@ public class PlayerMinor {
 
         double val = linesMethod(gameState);
         if (maxValue < val) {
+//            debug("Alternative");
+            maxValue = val;
+            bestStep.toI = moveI;
+            bestStep.toH = moveH;
+        }
+
+        if (runForestRun(maxValue, gameState)) {
             bestStep.toI = moveI;
             bestStep.toH = moveH;
         }
@@ -124,7 +131,7 @@ public class PlayerMinor {
         return valueFor(gameState, x, y, z);
     }
 
-    public static double k[][] = new double[][] {{0.5, 1.0, 0.0}, {1.0, 1.5, 0.3}, {0.5, 1.0, 0.3}};
+    public static double k[][] = new double[][] {{0.7, 1.0, 0.1}, {1.0, 1.5, 0.3}, {0.5, 1.0, 0.3}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -786,5 +793,25 @@ public class PlayerMinor {
             }
         }
         return value;
+    }
+
+    static public boolean runForestRun(double maxValue, GameState gameState) {
+        int grid[][] = gameState.grid;
+        if (maxValue == Double.MIN_VALUE) {
+            int minDist = Integer.MAX_VALUE;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (grid[i][h] == EMPTY) {
+                        int dis = distanceToPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, i, h);
+                        if (dis < minDist) {
+                            minDist = dis;
+                            moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, i, h);
+                        }
+                    }
+                }
+            }
+            return minDist != Integer.MAX_VALUE;
+        }
+        return false;
     }
 }

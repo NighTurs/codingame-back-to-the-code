@@ -256,9 +256,7 @@ public class PlayerMinorTest {
         int x = 5;
         int y = 14;
         int[] z = new int[]{2};
-        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z),
-                testIslandsForLine(map, 3, -1),
-                1.e-9);
+        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z), testIslandsForLine(map, 3, -1), 1.e-9);
         map = "00000000000011100000000000000000000" +
                 "0..........011100011110000000000000" +
                 "0.......000011100001110000000000000" +
@@ -307,6 +305,29 @@ public class PlayerMinorTest {
                 "0..0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.00" +
                 "11111111111111111111111111111111111";
         assertEquals(Double.MIN_VALUE, testIslandsForLine(map, 1, -1), 1.e-9);
+    }
+
+    @Test
+    public void testRunForestRun() {
+        int[][] grid = fullGrid();
+        grid[0][0] = PlayerMinor.EMPTY;
+        GameState gameState = new GameState(1, 1, Arrays.asList(new PlayerState(19, 34, 0)), grid);
+        assertEquals(true, PlayerMinor.runForestRun(Double.MIN_VALUE, gameState));
+        assertEquals(18, PlayerMinor.moveI);
+        assertEquals(34, PlayerMinor.moveH);
+        assertEquals(false, PlayerMinor.runForestRun(0.5, gameState));
+
+        grid = fullGrid();
+        grid[0][34] = PlayerMinor.EMPTY;
+        grid[19][0] = PlayerMinor.EMPTY;
+        gameState = new GameState(1, 1, Arrays.asList(new PlayerState(19, 34, 0)), grid);
+        assertEquals(true, PlayerMinor.runForestRun(Double.MIN_VALUE, gameState));
+        assertEquals(18, PlayerMinor.moveI);
+        assertEquals(34, PlayerMinor.moveH);
+
+        grid = fullGrid();
+        gameState = new GameState(1, 1, Arrays.asList(new PlayerState(19, 34, 0)), grid);
+        assertEquals(false, PlayerMinor.runForestRun(Double.MIN_VALUE, gameState));
     }
 
     private PlayerMinor.GameState fakeGameStateWithOponents(int ops) {
@@ -710,6 +731,16 @@ public class PlayerMinorTest {
         for (int i = 0; i < PlayerMinor.N; i++) {
             for (int h = 0; h < PlayerMinor.M; h++) {
                 grid[i][h] = -1;
+            }
+        }
+        return grid;
+    }
+
+    private int[][] fullGrid() {
+        int[][] grid = new int[PlayerMinor.N][PlayerMinor.M];
+        for (int i = 0; i < PlayerMinor.N; i++) {
+            for (int h = 0; h < PlayerMinor.M; h++) {
+                grid[i][h] = 0;
             }
         }
         return grid;
