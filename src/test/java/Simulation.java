@@ -172,8 +172,8 @@ public class Simulation {
                 }
             }
             int pos[] = winners(grid);
-                        System.out.println(pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3]);
-                        System.out.println(profs[0] + " " + profs[1] + " " + profs[2] + " " + profs[3]);
+//                        System.out.println(pos[0] + " " + pos[1] + " " + pos[2] + " " + pos[3]);
+//                        System.out.println(profs[0] + " " + profs[1] + " " + profs[2] + " " + profs[3]);
             for (int i = 0; i < NPLAYERS; i++) {
                 int ps = pos[i];
                 scores[profs[i]][ps]++;
