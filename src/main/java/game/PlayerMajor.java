@@ -12,10 +12,12 @@ public class PlayerMajor {
     public static final int M = 35;
     public static final int EMPTY = -1;
     public static final int MY = 0;
+    public static GameHistory gameHistory;
 
     public static void main(String args[]) {
         InputReader in = new InputReader(System.in);
         int opponentCount = in.nextInt();
+        gameHistory = new GameHistory(opponentCount);
 
         //noinspection InfiniteLoopStatement
         while (true) {
@@ -44,14 +46,9 @@ public class PlayerMajor {
                 }
             }
 
-            for (long[] row : c) {
-                Arrays.fill(row, 0);
-            }
-            MARK = 0;
-            MARK1 = 0;
-            Arrays.fill(mk, 0);
-
-            Turn turn = makeTurn(new GameState(gameRound, opponentCount, states, grid));
+            GameState gameState = new GameState(gameRound, opponentCount, states, grid);
+            gameHistory.updateHistory(gameState);
+            Turn turn = makeTurn(gameState);
 
             System.out.println(turn.toString());
         }
@@ -61,54 +58,77 @@ public class PlayerMajor {
     public static int CEMPTY;
     public static int CMY;
     public static Turn makeTurn(GameState gameState) {
-        double maxValue = Double.MIN_VALUE;
-        StepDesc bestStep = new StepDesc();
+        try {
+            double maxValue = Double.MIN_VALUE;
+            StepDesc bestStep = new StepDesc();
 
-        int[][] grid = gameState.grid;
-        int[] cempty = new int[Player.M];
-        int[] cmy = new int[Player.M];
-        CEMPTY = 0;
-        CMY = 0;
+            int[][] grid = gameState.grid;
+            int[] cempty = new int[M];
+            int[] cmy = new int[M];
+            CEMPTY = 0;
+            CMY = 0;
 
-        for (int i1 = 0; i1 < Player.N; i1++) {
-            for (int h = 0; h < Player.M; h++) {
-                cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
-                cmy[h] = grid[i1][h] == MY ? 1 : 0;
-            }
-            for (int i2 = i1 + 1; i2 < Player.N; i2++) {
-                for (int h = 0; h < Player.M; h++) {
-                    cempty[h] += grid[i2][h] == EMPTY ? 1 : 0;
-                    cmy[h] += grid[i2][h] == MY ? 1 : 0;
+            // TODO : delete
+            int dbcount = 0;
+
+            for (int i1 = 0; i1 < N; i1++) {
+                for (int h = 0; h < M; h++) {
+                    cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
+                    cmy[h] = grid[i1][h] == MY ? 1 : 0;
                 }
-                for (int h1 = 0; h1 < Player.M; h1++) {
-                    CEMPTY = cempty[h1];
-                    CMY = cmy[h1];
-                    for (int h2 = h1 + 1; h2 < Player.M; h2++) {
-                        CEMPTY += cempty[h2];
-                        CMY += cmy[h2];
-                        if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
-                            double curValue = computeValue(gameState, i1, i2, h1, h2);
-                            if (curValue > maxValue) {
-                                maxValue = curValue;
-                                bestStep.pointH = stepDesc.pointH;
-                                bestStep.pointI = stepDesc.pointI;
-                                bestStep.toH = stepDesc.toH;
-                                bestStep.toI = stepDesc.toI;
-                                bestStep.toRec = stepDesc.toRec;
+                for (int i2 = i1 + 1; i2 < N; i2++) {
+                    for (int h = 0; h < M; h++) {
+                        cempty[h] += grid[i2][h] == EMPTY ? 1 : 0;
+                        cmy[h] += grid[i2][h] == MY ? 1 : 0;
+                    }
+                    for (int h1 = 0; h1 < M; h1++) {
+                        CEMPTY = cempty[h1];
+                        CMY = cmy[h1];
+                        for (int h2 = h1 + 1; h2 < M; h2++) {
+                            CEMPTY += cempty[h2];
+                            CMY += cmy[h2];
+                            if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
+                                // TODO : delete
+                                dbcount++;
+                                double curValue = computeValue(gameState, i1, i2, h1, h2);
+                                if (curValue > maxValue) {
+                                    if (Double.isInfinite(maxValue) || Double.isNaN(maxValue)) {
+                                        debug("Invalid result" + maxValue);
+                                    }
+                                    maxValue = curValue;
+                                    bestStep.pointH = stepDesc.pointH;
+                                    bestStep.pointI = stepDesc.pointI;
+                                    bestStep.toH = stepDesc.toH;
+                                    bestStep.toI = stepDesc.toI;
+                                    bestStep.toRec = stepDesc.toRec;
+                                }
                             }
                         }
                     }
                 }
             }
+
+            debug("Besties : " + dbcount);
+
+            double val = linesMethod(gameState);
+            if (maxValue < val) {
+                maxValue = val;
+                bestStep.toI = moveI;
+                bestStep.toH = moveH;
+            }
+
+            if (runForestRun(maxValue, gameState)) {
+                bestStep.toI = moveI;
+                bestStep.toH = moveH;
+            }
+
+            return new Turn(bestStep.toH, bestStep.toI, 0);
+        } catch (Exception e) {
+            debug("error");
+            e.printStackTrace();
         }
-        if (bfsAlgo(gameState) > maxValue) {
-            debug("Alternative");
-            return new Turn(moveH, moveI, 0);
-        }
-        return new Turn(bestStep.toH, bestStep.toI, 0);
+        return null;
     }
-
-
 
     public static double maxValueFor(GameState gameState, int i1, int i2, int h1, int h2) {
         int dist = distanceToRec(i1, i2, h1, h2, gameState.getMyPlayer().i, gameState.getMyPlayer().h);
@@ -128,17 +148,20 @@ public class PlayerMajor {
         return valueFor(gameState, x, y, z);
     }
 
-    public static double k[][] = new double[][] {{1.0, 1.5, 0.0}, {0.6, 1.0, 0.2}, {0.8, 1.0, 0.15}};
+    public static double k[][] = new double[][] {{1.0, 1.0}, {1.0, 1.0}, {1.0, 1.0}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
         double k2 = k[gameState.opponentCount - 1][1];
-        double k3 = k[gameState.opponentCount - 1][2];
-        double value = Math.pow(1.0 / (x == 0 ? 0.5 : x), k1) * Math.pow(y, k2);
+
+        double value = Math.pow((y / (1.0 / 3 * x + 2.0 / 3) / 700), k1);
+        double min = Double.MAX_VALUE;
+
         for (int i = 0; i < gameState.opponentCount; i++) {
-            value *= Math.pow((z[i] == 0 ? 0.5 : z[i]), k3);
+            double cur = Math.pow((1 - gameHistory.history[i].calcDanger()) * (0.5 - (x - z[i]) / (N + M - 2)), k2);
+            min = Math.min(cur, min);
         }
-        return value;
+        return value * min;
     }
 
     static int hazz[] = new int[5];
@@ -427,142 +450,6 @@ public class PlayerMajor {
         System.err.println(msg);
     }
 
-
-    public static int[][] b = new int[N * M + 1][2];
-    //each round fill c with 0
-    public static long[][] c = new long[N][M];
-    //each round set this to 0
-    public static long MARK;
-    public static long MARK1;
-    //each round set this to 0
-    public static long[] mk = new long[700];
-    public static double bfsAlgo(GameState gameState) {
-        int[][] grid = gameState.grid;
-        double maxValue = Double.MIN_VALUE;
-        int bestI = 0, bestH = 0;
-
-        Set<Integer> set = new HashSet<Integer>();
-        for (int startI = 0; startI < N; startI++) {
-            for (int startH = 0; startH < M; startH++) {
-                if (grid[startI][startH] != EMPTY) {
-                    continue;
-                }
-                for (int j = 0; j < gameState.players.size(); j++) {
-                    hazz[j] = Integer.MAX_VALUE;
-                }
-                MARK++;
-                set.clear();
-                c[startI][startH] = MARK;
-                b[0][0] = startI;
-                b[0][1] = startH;
-                int kn = 1;
-                int i = 0;
-                while (i < kn) {
-                    int ci = b[i][0];
-                    int ch = b[i][1];
-                    int gain = kn;
-                    int toCover = kn - i + set.size();
-                    // Condition to consider this move
-                    if (gain > toCover * toCover) {
-                        MARK1++;
-                        int H = kn;
-                        for (int j : set) {
-                            b[H][0] = b[j][0];
-                            b[H][1] = b[j][1];
-                            H++;
-                        }
-
-                        int to = i;
-                        int hp = gameState.players.size() - 1;
-                        hazz[hp] = Integer.MAX_VALUE;
-                        for (int j = i; j < H; j++) {
-                            int dist = distanceToPoint(gameState.getMyPlayer().i,
-                                        gameState.getMyPlayer().h,
-                                        b[j][0],
-                                        b[j][1]);
-                            if (hazz[hp] > dist) {
-                                hazz[hp] = dist;
-                                to = j;
-                            }
-                        }
-                        int jc = to;
-                        mk[jc] = MARK1;
-                        int sum = 0;
-                        while (jc != -1) {
-                            int ind = -1;
-                            int min = Integer.MAX_VALUE;
-                            for (int j = i; j < H; j++) {
-                                if (mk[j] != MARK1) {
-                                    int d = distanceToPoint(b[jc][0], b[jc][1], b[j][0], b[j][1]);
-                                    if (min > d) {
-                                        min = d;
-                                        ind = j;
-                                    }
-                                }
-                            }
-                            jc = ind;
-                            if (ind != -1) {
-                                mk[ind] = MARK1;
-                            }
-                            if (min != Integer.MAX_VALUE) {
-                                sum += min;
-                            }
-                        }
-                        double curValue = valueFor(gameState, sum + hazz[gameState.players.size() - 1], gain, hazz);
-                        if (curValue > maxValue) {
-                            maxValue = curValue;
-                            moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, b[to][0], b[to][1]);
-                            bestI = moveI;
-                            bestH = moveH;
-                        }
-                    }
-
-                    if (ci == 0 || ch == 0 || ci == N - 1 || ch == M - 1) {
-                        set.add(i);
-                    }
-                    for (int j1 = -1; j1 <= 1; j1++) {
-                        for (int j2 = -1; j2 <= 1; j2++) {
-                            if (j1 == 0 && j2 == 0) {
-                                continue;
-                            }
-                            int ti = ci + j1;
-                            int th = ch + j2;
-                            if (ti < 0 || th < 0 || ti >= N - 1 || th >= M - 1) {
-                                continue;
-                            }
-                            if (j1 != 0 && j2 != 0 && (grid[ci][th] != EMPTY && grid[ti][ch] != EMPTY)) {
-                                if (grid[ti][th] != MY) {
-                                    set.add(i);
-                                }
-                                continue;
-                            }
-                            if (grid[ti][th] != MY && grid[ti][th] != EMPTY) {
-                                set.add(i);
-                                continue;
-                            }
-                            if (grid[ti][th] == EMPTY && c[ti][th] != MARK) {
-                                c[ti][th] = MARK;
-                                b[kn][0] = ti;
-                                b[kn][1] = th;
-                                for (int jj = 0; jj < gameState.opponentCount; jj++) {
-                                    hazz[jj] = Math.min(hazz[jj], distanceToPoint(gameState.players.get(jj + 1).i,
-                                            gameState.players.get(jj + 1).h,
-                                            ti,
-                                            th));
-                                }
-                                kn++;
-                            }
-                        }
-                    }
-                    i++;
-                }
-            }
-        }
-        moveI = bestI;
-        moveH = bestH;
-        return maxValue;
-    }
-
     public static class StepDesc {
 
         public int toI;
@@ -661,6 +548,406 @@ public class PlayerMajor {
 
         public long nextLong() {
             return Long.parseLong(next());
+        }
+    }
+
+    static public double linesMethod(GameState gameState) {
+        double maxValue = Double.MIN_VALUE;
+        int moveToI = 0;
+        int moveToH = 0;
+        for (int lineI = -1; lineI < N; lineI++) {
+            for (int lineH = -1; lineH < M; lineH++) {
+                if (lineH == -1 ^ lineI == -1) {
+                    double value = islandsForLine(gameState, lineI, lineH);
+                    if (value > maxValue) {
+                        maxValue = value;
+                        moveToI = moveI;
+                        moveToH = moveH;
+                    }
+                }
+            }
+        }
+        moveI = moveToI;
+        moveH = moveToH;
+        return maxValue;
+    }
+
+    public static int[][] c = new int[N][M];
+    public static int[][] b = new int[N * M + 1][2];
+    public static int[][] sgNeed = new int[N * M][2];
+    public static int[][] con = new int[N * M][2];
+    public static int[][] islandsGraph = new int[M * N / 4][M * N / 4];
+    public static int[][] islandHazz = new int[M * N / 4][3];
+    public static int conN = 0;
+    public static int sgNeedN = 0;
+    public static int[] need = new int[M];
+    public static boolean[] visitedIsland = new boolean[M * N / 4];
+    public static int[] islandGroup = new int[M];
+    public static int[] islandSum = new int[M * N];
+    public static int MARK = 1;
+    public static Set<Integer> neededPointsSet = new HashSet<Integer>();
+    public static double islandsForLine(GameState gameState, int lineI, int lineH) {
+        sgNeedN = 0;
+        conN = 0;
+        MARK++;
+        Arrays.fill(needOnInd, 0);
+        Arrays.fill(need, 0);
+        Arrays.fill(visitedIsland, false);
+        for (int[] row : islandHazz) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+        int[][] grid = gameState.grid;
+        int moveToI = 0;
+        int moveToH = 0;
+        int bsfInd = 0;
+        for (int startI = 0; startI < N; startI++) {
+            for (int startH = 0; startH < M; startH++) {
+                if (startI != lineI && startH != lineH && c[startI][startH] != MARK && grid[startI][startH] == EMPTY) {
+                    bsfInd++;
+                    islandSum[bsfInd] = bsf(gameState, lineI, lineH, startI, startH, bsfInd);
+                }
+            }
+        }
+        bsfInd++;
+        for (int i = 1; i < bsfInd; i++) {
+            for (int h = 1; h < bsfInd; h++) {
+                islandsGraph[i][h] = 0;
+            }
+        }
+        for (int i = 0; i < conN; i++) {
+            islandsGraph[con[i][0]][con[i][1]]++;
+            islandsGraph[con[i][1]][con[i][0]]++;
+        }
+
+        double maxValue = Double.MIN_VALUE;
+        for (int jj = 1; jj < bsfInd; jj++) {
+            if (!visitedIsland[jj]) {
+                Arrays.fill(hazz, Integer.MAX_VALUE);
+                islandCons = 0;
+                int groupN = relatedIslands(jj, bsfInd, 0) + 1;
+                int sharedPoints = islandCons;
+                int minDist = Integer.MAX_VALUE;
+                int minDistPointI = 0;
+                int minDistPointH = 0;
+                int left = Integer.MAX_VALUE;
+                int right = Integer.MIN_VALUE;
+                neededPointsSet.clear();
+                int wholeSum = 0;
+                for (int i = 0; i < groupN; i++) {
+                    int islInd = islandGroup[i];
+                    for (int ii = 0; ii < sgNeedN; ii++) {
+                        if (sgNeed[ii][0] == islInd) {
+                            if (neededPointsSet.contains(sgNeed[ii][1])) {
+                                sharedPoints++;
+                            } else {
+                                neededPointsSet.add(sgNeed[ii][1]);
+                            }
+                        }
+                    }
+                    wholeSum += islandSum[islInd];
+                    for (int hh = 0; hh < gameState.opponentCount; hh++) {
+                        hazz[hh] = Math.min(hazz[hh], islandHazz[islInd][hh]);
+                    }
+                    for (int h = 0; h < M; h++) {
+                        if (need[h] == islInd) {
+                            neededPointsSet.add(h);
+                        }
+                    }
+                }
+                for (Integer i : neededPointsSet) {
+                    if (i > right) {
+                        right = i;
+                    }
+                    if (i < left) {
+                        left = i;
+                    }
+                    int pointI = 0;
+                    int pointH = 0;
+                    if (lineI == -1) {
+                        pointI = i;
+                        pointH = lineH;
+                    } else {
+                        pointI = lineI;
+                        pointH = i;
+                    }
+                    int dis = distanceToPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, pointI, pointH);
+                    if (minDist > dis) {
+                        minDist = dis;
+                        minDistPointI = pointI;
+                        minDistPointH = pointH;
+                    }
+                }
+                int x = (minDist == 0 ? 0 : minDist - 1) + right - left + 1;
+                int y = wholeSum - sharedPoints;
+                double value = valueFor(gameState, x, y, hazz);
+                if (value > maxValue) {
+                    maxValue = value;
+                    moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, minDistPointI, minDistPointH);
+                    moveToI = moveI;
+                    moveToH = moveH;
+                }
+            }
+        }
+        moveI = moveToI;
+        moveH = moveToH;
+        return maxValue;
+    }
+
+    public static int islandCons = 0;
+    public static int relatedIslands(int st, int count, int groupInd) {
+        islandGroup[groupInd] = st;
+        visitedIsland[st] = true;
+        for (int i = 1; i < count; i++) {
+            if (islandsGraph[st][i] > 0 && !visitedIsland[i]) {
+                islandCons += islandsGraph[st][i];
+                groupInd = relatedIslands(i, count, groupInd + 1);
+            }
+        }
+        return groupInd;
+    }
+
+    public static int[] curNeed = new int[M];
+    public static int[] curSgNeed = new int[M * 2];
+    public static int[] needOnInd = new int[M];
+    public static int bsf(GameState gameState, int lineI, int lineH, int startI, int startH, int myIndx) {
+        int[][] grid = gameState.grid;
+        c[startI][startH] = MARK;
+
+        b[0][0] = startI;
+        b[0][1] = startH;
+        int i = 0;
+        int kn = 1;
+        int curSgNeedN = 0;
+        int curNeedN = 0;
+        int value = 1;
+        boolean struckBorderOrAlien = false;
+        if (startI == 0 || startH == 0 || startI == N - 1 || startH == M - 1) {
+            struckBorderOrAlien = true;
+        }
+
+        for (int jj = 0; jj < gameState.opponentCount; jj++) {
+            islandHazz[myIndx][jj] =
+                    distanceToPoint(gameState.players.get(jj + 1).i,
+                            gameState.players.get(jj + 1).h,
+                            startI,
+                            startH);
+        }
+
+        while (i < kn) {
+            int ci = b[i][0];
+            int ch = b[i][1];
+            for (int j1 = -1; j1 <= 1; j1++) {
+                for (int j2 = -1; j2 <= 1; j2++) {
+                    if (!(j1 == 0 && j2 == 0)) {
+                        int ti = ci + j1;
+                        int th = ch + j2;
+                        if (ti < 0 || th < 0 || ti >= N || th >= M || c[ti][th] == MARK) {
+                            continue;
+                        }
+                        if (grid[ti][th] != MY && grid[ti][th] != EMPTY) {
+                            struckBorderOrAlien = true;
+                            continue;
+                        }
+                        if (grid[ti][th] == MY) {
+                            continue;
+                        }
+
+                        for (int jj = 0; jj < gameState.opponentCount; jj++) {
+                            islandHazz[myIndx][jj] = Math.min(islandHazz[myIndx][jj],
+                                    distanceToPoint(gameState.players.get(jj + 1).i,
+                                            gameState.players.get(jj + 1).h,
+                                            ti,
+                                            th));
+                        }
+
+                        if (ti == lineI || th == lineH) {
+                            int needInd = lineI == -1 ? ti : th;
+                            if (ti != ci && th != ch) {
+                                curSgNeed[curSgNeedN] = needInd;
+                                curSgNeedN++;
+                            } else {
+                                curNeed[curNeedN] = needInd;
+                                needOnInd[needInd] = myIndx;
+                                curNeedN++;
+                            }
+                            continue;
+                        }
+
+                        // We will come here only if cell is empty and not on line
+                        if (ti == 0 || th == 0 || ti == N - 1 || th == M - 1) {
+                            struckBorderOrAlien = true;
+                        }
+                        value++;
+                        b[kn][0] = ti;
+                        b[kn][1] = th;
+                        c[ti][th] = MARK;
+                        kn++;
+                    }
+                }
+            }
+            i++;
+        }
+
+        if (struckBorderOrAlien) {
+            return 0;
+        }
+
+        for (int h = 0; h < curNeedN; h++) {
+            value++;
+            if (need[curNeed[h]] == 0) {
+                need[curNeed[h]] = myIndx;
+            } else {
+                con[conN][0] = myIndx;
+                con[conN][1] = need[curNeed[h]];
+                need[curNeed[h]] = 0;
+                conN++;
+            }
+        }
+        for (int h = 0; h < curSgNeedN; h++) {
+            int ind = curSgNeed[h];
+            if (needOnInd[ind] != myIndx) {
+                value++;
+                sgNeed[sgNeedN][0] = myIndx;
+                sgNeed[sgNeedN][1] = ind;
+                sgNeedN++;
+            }
+        }
+        return value;
+    }
+
+    static public boolean runForestRun(double maxValue, GameState gameState) {
+        int grid[][] = gameState.grid;
+        if (maxValue == Double.MIN_VALUE) {
+            int minDist = Integer.MAX_VALUE;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (grid[i][h] == EMPTY) {
+                        int dis = distanceToPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, i, h);
+                        if (dis < minDist) {
+                            minDist = dis;
+                            moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, i, h);
+                        }
+                    }
+                }
+            }
+            return minDist != Integer.MAX_VALUE;
+        }
+        return false;
+    }
+
+    public static class GameHistory {
+        public PlayerHistory[] history;
+
+        public GameHistory(int oponentCount) {
+            history = new PlayerHistory[oponentCount];
+            for (int i = 0; i < oponentCount; i++) {
+                history[i] = new PlayerHistory(i + 1);
+            }
+        }
+
+        public void updateHistory(GameState gameState) {
+            int empty = countEmpty(gameState.grid);
+            for (int i = 0; i < history.length; i++) {
+                history[i].updateHistory(gameState, empty);
+            }
+            for (int i = 0; i < history.length; i++) {
+                debug("Player " + i + " danger " + history[i].calcDanger());
+            }
+        }
+
+        private int countEmpty(int[][] grid) {
+            int count = 0;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (grid[i][h] == EMPTY) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+    }
+
+
+    public static class PlayerHistory {
+        public static double DEFAULT_DNG = 0.99;
+        public static double CRAZY_MODE_DNG = 0.1;
+
+        int prevRound;
+        int playerIndx;
+        int difHor;
+        int difVer;
+        int difMax;
+        int points;
+        int lastI;
+        int lastH;
+        int emptyPoints;
+        boolean wentCrazy;
+        int wentCrazyRound;
+
+        public PlayerHistory(int playerIndx) {
+            this.playerIndx = playerIndx;
+            this.lastI = -1;
+            this.lastH = -1;
+        }
+
+        public void updateHistory(GameState gameState, int emptyPoints) {
+            this.emptyPoints = emptyPoints;
+            PlayerState player = gameState.players.get(playerIndx);
+            if (lastH != -1) {
+                difHor += player.h - lastH;
+                difVer += player.i - lastI;
+            }
+            if (gameState.gameRound - prevRound != 1) {
+                difMax = 0;
+            }
+            if (difMax < diffSum()) {
+                difMax = diffSum();
+            }
+            int newPoints = calcPoints(gameState);
+            if (gameState.gameRound < wentCrazyRound) {
+                wentCrazy = false;
+            }
+            if (newPoints - points > 5) {
+                wentCrazyRound = gameState.gameRound;
+                wentCrazy = true;
+            }
+            points = newPoints;
+            lastI = player.i;
+            lastH = player.h;
+            prevRound = gameState.gameRound;
+        }
+
+        public double calcDanger() {
+            if (wentCrazy) {
+                if (prevRound - wentCrazyRound <= 10) {
+                    return CRAZY_MODE_DNG;
+                } else {
+                    return emptyPoints * 1.0 / (N * M);
+                }
+            } else {
+                if (difMax <= diffSum() || difMax == 1) {
+                    return DEFAULT_DNG;
+                } else {
+                    return 1 - (difMax - diffSum()) * 1.0 / (difMax - 1);
+                }
+            }
+        }
+
+        private int diffSum() {
+            return Math.abs(difHor) + Math.abs(difVer);
+        }
+
+        private int calcPoints(GameState gameState) {
+            int points = 0;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (gameState.grid[i][h] == playerIndx) {
+                        points++;
+                    }
+                }
+            }
+            return points;
         }
     }
 }

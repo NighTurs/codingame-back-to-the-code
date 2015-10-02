@@ -97,7 +97,6 @@ public class PlayerMinor {
 
         double val = linesMethod(gameState);
         if (maxValue < val) {
-//            debug("Alternative");
             maxValue = val;
             bestStep.toI = moveI;
             bestStep.toH = moveH;
