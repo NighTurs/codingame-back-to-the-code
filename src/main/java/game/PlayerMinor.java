@@ -57,12 +57,15 @@ public class PlayerMinor {
         double maxValue = Double.MIN_VALUE;
         StepDesc bestStep = new StepDesc();
 
+        long st = System.currentTimeMillis();
+
         int[][] grid = gameState.grid;
         int[] cempty = new int[M];
         int[] cmy = new int[M];
         CEMPTY = 0;
         CMY = 0;
 
+        lb:
         for (int i1 = 0; i1 < N; i1++) {
             for (int h = 0; h < M; h++) {
                 cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
@@ -74,6 +77,10 @@ public class PlayerMinor {
                     cmy[h] += grid[i2][h] == MY ? 1 : 0;
                 }
                 for (int h1 = 0; h1 < M; h1++) {
+                    long ed = System.currentTimeMillis();
+                    if (ed - st > 95) {
+                        break lb;
+                    }
                     CEMPTY = cempty[h1];
                     CMY = cmy[h1];
                     for (int h2 = h1 + 1; h2 < M; h2++) {
@@ -130,7 +137,7 @@ public class PlayerMinor {
         return valueFor(gameState, x, y, z);
     }
 
-    public static double k[][] = new double[][] {{0.7, 1.0, 0.1}, {0.75, 1.0, 0.1}, {0.8, 1.0, 0.1}};
+    public static double k[][] = new double[][] {{0.6, 1.0, 0.2}, {0.70, 1.0, 0.15}, {0.8, 1.0, 0.1}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -600,7 +607,7 @@ public class PlayerMinor {
 
         double maxValue = Double.MIN_VALUE;
         for (int jj = 1; jj < bsfInd; jj++) {
-            if (!visitedIsland[jj]) {
+            if (!visitedIsland[jj] && islandSum[jj] > 0) {
                 Arrays.fill(hazz, Integer.MAX_VALUE);
                 islandCons = 0;
                 int groupN = relatedIslands(jj, bsfInd, 0) + 1;
