@@ -256,7 +256,7 @@ public class PlayerMinorTest {
         int x = 5;
         int y = 14;
         int[] z = new int[]{2};
-        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z), testIslandsForLine(map, 3, -1), 1.e-9);
+        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1, map), x, y, z, fakeGameStateWithOponents(1, map).emptyCells), testIslandsForLine(map, 3, -1), 1.e-9);
         map = "00000000000011100000000000000000000" +
                 "0..........011100011110000000000000" +
                 "0.......000011100001110000000000000" +
@@ -280,7 +280,7 @@ public class PlayerMinorTest {
         x = 11;
         y = 30;
         z = new int[]{2};
-        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1), x, y, z),
+        assertEquals(PlayerMinor.valueFor(fakeGameStateWithOponents(1, map), x, y, z, fakeGameStateWithOponents(1, map).emptyCells),
                 testIslandsForLine(map, 3, -1),
                 1.e-9);
 
@@ -330,8 +330,8 @@ public class PlayerMinorTest {
         assertEquals(false, PlayerMinor.runForestRun(Double.MIN_VALUE, gameState));
     }
 
-    private PlayerMinor.GameState fakeGameStateWithOponents(int ops) {
-        return new PlayerMinor.GameState(1, 1, null, null);
+    private PlayerMinor.GameState fakeGameStateWithOponents(int ops, String map) {
+        return new PlayerMinor.GameState(1, 1, null, stringToGrid(map));
     }
 
     private double testIslandsForLine(String map, int lineI, int lineH) {

@@ -124,7 +124,7 @@ public class PlayerMinor {
         int x = dist;
         int y = CEMPTY + (dist == 0 ? 0 : (dist - 1));
         int[] z = computeHazzard(gameState, i1, i2, h1, h2);
-        return valueFor(gameState, x, y, z);
+        return valueFor(gameState, x, y, z, gameState.emptyCells);
     }
 
     public static double computeValue(GameState gameState, int i1, int i2, int h1, int h2) {
@@ -134,20 +134,22 @@ public class PlayerMinor {
         int x = workToComplete(gameState, i1, i2, h1, h2);
         int y = computePoints(gameState, stepDesc, i1, i2, h1, h2);
         int[] z = computeHazzard(gameState, i1, i2, h1, h2);
-        return valueFor(gameState, x, y, z);
+        return valueFor(gameState, x, y, z, gameState.emptyCells);
     }
 
-    public static double k[][] = new double[][] {{0.6, 1.0, 0.2}, {0.70, 1.0, 0.15}, {0.8, 1.0, 0.1}};
+    public static double k[][] = new double[][] {{0.5, 1.0, 0.2}, {0.5, 1.0, 0.2}, {0.5, 1.0, 0.2}};
 
-    public static double valueFor(GameState gameState, int x, int y, int[] z) {
+    public static double valueFor(GameState gameState, int x, int y, int[] z, int emptyCells) {
         double k1 = k[gameState.opponentCount - 1][0];
         double k2 = k[gameState.opponentCount - 1][1];
         double k3 = k[gameState.opponentCount - 1][2];
         double value = Math.pow(1.0 / (x == 0 ? 0.5 : x), k1) * Math.pow(y, k2);
+        double minZ = Double.MAX_VALUE;
         for (int i = 0; i < gameState.opponentCount; i++) {
-            value *= Math.pow((z[i] == 0 ? 0.5 : z[i]), k3);
+            minZ = Math.min(minZ, Math.pow((z[i] == 0 ? 0.5 : z[i]) * 1.0 / (x == 0 ? 0.5 : x), k3 / 3 + k3 * 2 *
+                    (emptyCells * 1.0 / N * M) / 3.0));
         }
-        return value;
+        return value * minZ;
     }
 
     static int hazz[] = new int[5];
@@ -451,12 +453,22 @@ public class PlayerMinor {
         final int opponentCount;
         final List<PlayerState> players;
         final int[][] grid;
+        final int emptyCells;
 
         public GameState(int gameRound, int opponentCount, List<PlayerState> players, int[][] grid) {
             this.gameRound = gameRound;
             this.opponentCount = opponentCount;
             this.players = players;
             this.grid = grid;
+            int empty = 0;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (grid[i][h] == EMPTY) {
+                        empty++;
+                    }
+                }
+            }
+            this.emptyCells = empty;
         }
 
         public PlayerState getMyPlayer() {
@@ -665,7 +677,7 @@ public class PlayerMinor {
                 }
                 int x = (minDist == 0 ? 0 : minDist - 1) + right - left + 1;
                 int y = wholeSum - sharedPoints;
-                double value = valueFor(gameState, x, y, hazz);
+                double value = valueFor(gameState, x, y, hazz, gameState.emptyCells);
                 if (value > maxValue) {
                     maxValue = value;
                     moveTowardPoint(gameState.getMyPlayer().i, gameState.getMyPlayer().h, minDistPointI, minDistPointH);
