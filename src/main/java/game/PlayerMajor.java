@@ -69,9 +69,7 @@ public class PlayerMajor {
         CEMPTY = 0;
         CMY = 0;
 
-        // TODO : delete
-        int dbcount = 0;
-
+        lb:
         for (int i1 = 0; i1 < N; i1++) {
             for (int h = 0; h < M; h++) {
                 cempty[h] = grid[i1][h] == EMPTY ? 1 : 0;
@@ -83,17 +81,22 @@ public class PlayerMajor {
                     cmy[h] += grid[i2][h] == MY ? 1 : 0;
                 }
                 for (int h1 = 0; h1 < M; h1++) {
+                    long ed = System.currentTimeMillis();
+                    if (ed - st > 90) {
+                        break lb;
+                    }
                     CEMPTY = cempty[h1];
                     CMY = cmy[h1];
                     for (int h2 = h1 + 1; h2 < M; h2++) {
                         CEMPTY += cempty[h2];
                         CMY += cmy[h2];
                         if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
-                            // TODO : delete
-                            dbcount++;
                             double curValue = computeValue(gameState, i1, i2, h1, h2);
                             if (curValue > maxValue) {
                                 maxValue = curValue;
+                                if (Double.isInfinite(maxValue)) {
+                                    debug(maxValue + " " + i1 + " " + i2 + " " + h1 + " " + h2);
+                                }
                                 bestStep.pointH = stepDesc.pointH;
                                 bestStep.pointI = stepDesc.pointI;
                                 bestStep.toH = stepDesc.toH;
@@ -106,8 +109,6 @@ public class PlayerMajor {
             }
         }
 
-        debug("Besties : " + dbcount);
-
         double val = linesMethod(gameState);
         if (maxValue < val) {
             maxValue = val;
@@ -119,10 +120,6 @@ public class PlayerMajor {
             bestStep.toI = moveI;
             bestStep.toH = moveH;
         }
-
-        long ed = System.currentTimeMillis();
-
-        debug("Time:" + (ed - st));
 
         return new Turn(bestStep.toH, bestStep.toI, 0);
     }
@@ -151,11 +148,11 @@ public class PlayerMajor {
         double k1 = k[gameState.opponentCount - 1][0];
         double k2 = k[gameState.opponentCount - 1][1];
 
-        double value = Math.pow((y / (1.0 / 3 * x + 2.0 / 3) / 700), k1);
+        double value = Math.pow((1 + y / (1.0 / 3 * x + 2.0 / 3) / 700), k1);
         double min = Double.MAX_VALUE;
 
         for (int i = 0; i < gameState.opponentCount; i++) {
-            double cur = Math.pow((1 - gameHistory.history[i].calcDanger()) * (0.5 - (x - z[i]) / (N + M - 2)), k2);
+            double cur = Math.pow((2 - gameHistory.history[i].calcDanger()) * (0.5 - (x - z[i]) / (N + M - 2)), k2);
             min = Math.min(cur, min);
         }
         return value * min;
@@ -619,7 +616,7 @@ public class PlayerMajor {
 
         double maxValue = Double.MIN_VALUE;
         for (int jj = 1; jj < bsfInd; jj++) {
-            if (!visitedIsland[jj]) {
+            if (!visitedIsland[jj] && islandSum[jj] > 0) {
                 Arrays.fill(hazz, Integer.MAX_VALUE);
                 islandCons = 0;
                 int groupN = relatedIslands(jj, bsfInd, 0) + 1;
@@ -847,9 +844,6 @@ public class PlayerMajor {
             int empty = countEmpty(gameState.grid);
             for (int i = 0; i < history.length; i++) {
                 history[i].updateHistory(gameState, empty);
-            }
-            for (int i = 0; i < history.length; i++) {
-                debug("Player " + i + " danger " + history[i].calcDanger());
             }
         }
 
