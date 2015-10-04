@@ -147,7 +147,7 @@ public class PlayerMinor {
         return valueFor(gameState, x, y, z, gameState.emptyCells);
     }
 
-    public static double k[][] = new double[][] {{0.7, 1.4, 0.2}, {0.7, 1.2, 0.15}, {0.8, 1.0, 0.1}};
+    public static double k[][] = new double[][] {{0.7, 1.4, 0.2}, {1.0, 1.5, 0.4}, {1.0, 1.5, 0.4}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z, int emptyCells) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -156,8 +156,8 @@ public class PlayerMinor {
         double value = Math.pow(1.0 / (x == 0 ? 0.5 : x), k1) * Math.pow(y, k2);
         double minZ = Double.MAX_VALUE;
         for (int i = 0; i < gameState.opponentCount; i++) {
-            minZ = Math.min(minZ, Math.pow((z[i] == 0 ? 0.5 : z[i]) * 1.0 / (x == 0 ? 0.5 : x), k3 / 10 + k3 * 9 *
-                    (emptyCells * 1.0 / N / M) / 10.0));
+            minZ = Math.min(minZ, Math.pow((z[i] == 0 ? 0.5 : z[i]) * 1.0 / (x == 0 ? 0.5 : x), k3 / 20 + k3 * 19 *
+                    (emptyCells * 1.0 / N / M) / 20.0));
         }
         return value * minZ;
     }
