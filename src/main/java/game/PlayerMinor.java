@@ -147,7 +147,7 @@ public class PlayerMinor {
         return valueFor(gameState, x, y, z, gameState.emptyCells);
     }
 
-    public static double k[][] = new double[][] {{0.9, 1.7, 0.2}, {0.8, 1.5, 0.25}, {0.7, 1.5, 0.3}};
+    public static double k[][] = new double[][] {{0.7, 1.4, 0.2}, {0.7, 1.2, 0.15}, {0.8, 1.0, 0.1}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z, int emptyCells) {
         double k1 = k[gameState.opponentCount - 1][0];
