@@ -12,6 +12,7 @@ public class PlayerMinor {
     public static final int M = 35;
     public static final int EMPTY = -1;
     public static final int MY = 0;
+    public static Future future = new Future();
 
     public static void main(String args[]) {
         InputReader in = new InputReader(System.in);
@@ -54,16 +55,20 @@ public class PlayerMinor {
     public static int CEMPTY;
     public static int CMY;
     public static Turn makeTurn(GameState gameState) {
+
         double maxValue = Double.MIN_VALUE;
         StepDesc bestStep = new StepDesc();
 
         long st = System.currentTimeMillis();
 
-        int[][] grid = gameState.grid;
         int[] cempty = new int[M];
         int[] cmy = new int[M];
         CEMPTY = 0;
         CMY = 0;
+
+        future.update(gameState);
+        GameState mixedGameState = future.futureMixin(gameState);
+        int[][] grid = mixedGameState.grid;
 
         lb:
         for (int i1 = 0; i1 < N; i1++) {
@@ -86,8 +91,8 @@ public class PlayerMinor {
                     for (int h2 = h1 + 1; h2 < M; h2++) {
                         CEMPTY += cempty[h2];
                         CMY += cmy[h2];
-                        if (maxValueFor(gameState, i1, i2, h1, h2) > maxValue) {
-                            double curValue = computeValue(gameState, i1, i2, h1, h2);
+                        if (maxValueFor(mixedGameState, i1, i2, h1, h2) > maxValue) {
+                            double curValue = computeValue(mixedGameState, i1, i2, h1, h2);
                             if (curValue > maxValue) {
                                 maxValue = curValue;
                                 bestStep.pointH = stepDesc.pointH;
@@ -102,16 +107,21 @@ public class PlayerMinor {
             }
         }
 
-        double val = linesMethod(gameState);
+        double val = linesMethod(mixedGameState);
         if (maxValue < val) {
             maxValue = val;
             bestStep.toI = moveI;
             bestStep.toH = moveH;
         }
 
-        if (runForestRun(maxValue, gameState)) {
+        if (runForestRun(maxValue, mixedGameState)) {
             bestStep.toI = moveI;
             bestStep.toH = moveH;
+        }
+
+        int back = future.addNewExpectedAndReportBack(maxValue);
+        if (back > 0 && gameState.getMyPlayer().backInTimeLeft > 0) {
+            return new Turn(bestStep.toH, bestStep.toI, back);
         }
 
         return new Turn(bestStep.toH, bestStep.toI, 0);
@@ -137,8 +147,7 @@ public class PlayerMinor {
         return valueFor(gameState, x, y, z, gameState.emptyCells);
     }
 
-    public static double k[][] = new double[][] {{0.5, 1.0, 0.3}, {0.6, 1.0, 0.4}, {0.7, 1.0, 0.5}};
-    //public static double k[][] = new double[][] {{0.5, 1.0, 0.2}, {0.5, 1.0, 0.2}, {0.5, 1.0, 0.2}};
+    public static double k[][] = new double[][] {{0.9, 1.7, 0.2}, {0.8, 1.5, 0.25}, {0.7, 1.5, 0.3}};
 
     public static double valueFor(GameState gameState, int x, int y, int[] z, int emptyCells) {
         double k1 = k[gameState.opponentCount - 1][0];
@@ -497,9 +506,10 @@ public class PlayerMinor {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append(x).append(" ").append(y);
             if (goBack > 0) {
-                sb.append("\rBACK ").append(goBack);
+                sb.append("BACK ").append(goBack);
+            } else {
+                sb.append(x).append(" ").append(y);
             }
             if (message != null) {
                 sb.append("\r").append(message);
@@ -832,5 +842,82 @@ public class PlayerMinor {
             return minDist != Integer.MAX_VALUE;
         }
         return false;
+    }
+
+    public static class Future {
+        public int lastScore;
+        public GameState futureState;
+        public int curRound;
+        public List<Double> expectedPointsByRound;
+        public List<Integer> closeUpRound;
+
+        public Future() {
+            expectedPointsByRound = new ArrayList<>();
+            for (int i = 0; i < 1000; i++) {
+                expectedPointsByRound.add(0.0);
+            }
+            closeUpRound = new LinkedList<>();
+        }
+
+        public GameState futureMixin(GameState gameState) {
+            if (futureState == null || futureState.gameRound <= gameState.gameRound) {
+                return gameState;
+            }
+            int[][] grid = new int[N][M];
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    grid[i][h] = gameState.grid[i][h];
+                    if (grid[i][h] == EMPTY && futureState.grid[i][h] != MY) {
+                        grid[i][h] = futureState.grid[i][h];
+                    }
+                }
+            }
+            return new GameState(gameState.gameRound, gameState.opponentCount, gameState.players, grid);
+        }
+
+        public void update(GameState gameState) {
+            if (futureState == null || futureState.gameRound <= gameState.gameRound) {
+                futureState = gameState;
+            }
+            curRound = gameState.gameRound;
+            int score = 0;
+            for (int i = 0; i < N; i++) {
+                for (int h = 0; h < M; h++) {
+                    if (gameState.grid[i][h] == MY) {
+                        score++;
+                    }
+                }
+            }
+            if (score - lastScore >= 5) {
+                closeUpRound.add(gameState.gameRound);
+            }
+            lastScore = score;
+            // remove closeup round that were deleted
+            closeUpRound.removeIf(x -> x > gameState.gameRound);
+        }
+
+        public static int WAIT_FOR = 10;
+        public int addNewExpectedAndReportBack(double expected) {
+            expectedPointsByRound.add(curRound, expected);
+            // check for closeups in last rounds
+            boolean isCloseupRecently = false;
+            for (Integer i : closeUpRound) {
+                if (i == curRound - WAIT_FOR + 1) {
+                    isCloseupRecently = true;
+                }
+            }
+            if (curRound > WAIT_FOR && !isCloseupRecently) {
+                boolean trig = true;
+                for (int i = 0; i < WAIT_FOR; i++) {
+                    if (expectedPointsByRound.get(curRound - WAIT_FOR) < expectedPointsByRound.get(curRound - i) * 1.3) {
+                        trig = false;
+                    }
+                }
+                if (trig) {
+                    return 25;
+                }
+            }
+            return 0;
+        }
     }
 }
