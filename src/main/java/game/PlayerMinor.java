@@ -909,7 +909,7 @@ public class PlayerMinor {
             if (curRound > WAIT_FOR && !isCloseupRecently) {
                 boolean trig = true;
                 for (int i = 0; i < WAIT_FOR; i++) {
-                    if (expectedPointsByRound.get(curRound - WAIT_FOR) < expectedPointsByRound.get(curRound - i) * 1.3) {
+                    if (expectedPointsByRound.get(curRound - WAIT_FOR) < expectedPointsByRound.get(curRound - i) * 1.1) {
                         trig = false;
                     }
                 }
