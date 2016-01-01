@@ -1,0 +1,1 @@
+####Solution to [CodinGame Back To The Code competition](https://www.codingame.com/challenge/back-to-the-code)
